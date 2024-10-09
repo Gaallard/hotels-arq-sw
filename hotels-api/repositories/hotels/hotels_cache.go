@@ -2,6 +2,7 @@ package hotels
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	hotelsDAO "hotels-api/dao/hotels"
 	hotelsDomain "hotels-api/domain/hotels"
@@ -70,10 +71,14 @@ func (repo Cache) DeleteHotel(ctx context.Context, id int64) error {
 
 func (repo Cache) UpdateHotel(ctx context.Context, id int64, hotel hotelsDomain.Hotel) (hotelsDomain.Hotel, error) {
 	key := fmt.Sprintf(keyFormat, id)
-	replace := repo.client.Replace(key, hotel)
-	if replace == false {
-		return hotelsDomain.Hotel{}, fmt.Errorf("error converting key %s", replace)
+
+	hotelJSON, err := json.Marshal(hotel)
+	if err != nil {
+		return hotelsDomain.Hotel{}, fmt.Errorf("error serializing hotel to JSON: %v", err)
 	}
+
+	expiration := 5 * time.Minute
+	repo.client.Set(key, hotelJSON, expiration)
 
 	return hotel, nil
 }

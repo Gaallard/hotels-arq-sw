@@ -92,22 +92,15 @@ func (service Service) DeleteHotel(ctx context.Context, id int64) error {
 
 func (service Service) UpdateHotel(ctx context.Context, id int64, hotel hotelsDomain.Hotel) (hotelsDomain.Hotel, error) {
 
-	hotelDomain := hotelsDomain.Hotel{
-		Name:      hotel.Name,
-		Address:   hotel.Address,
-		City:      hotel.City,
-		State:     hotel.State,
-		Rating:    hotel.Rating,
-		Amenities: hotel.Amenities,
-	}
-
-	if err := service.mainRepository.UpdateHotel(ctx, id, hotelDomain); err != nil {
+	updatedHotel, err := service.mainRepository.UpdateHotel(ctx, id, hotel)
+	if err != nil {
 		return hotelsDomain.Hotel{}, fmt.Errorf("Error updating hotel into main repository: %v", err)
 	}
 
-	if err := service.cacheRepository.UpdateHotel(ctx, id, hotelDomain); err != nil {
+	_, err = service.cacheRepository.UpdateHotel(ctx, id, hotel)
+	if err != nil {
 		return hotelsDomain.Hotel{}, fmt.Errorf("Error updating hotel into cache: %v", err)
 	}
 
-	return hotelDomain, nil
+	return updatedHotel, nil
 }

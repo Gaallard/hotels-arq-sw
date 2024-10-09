@@ -42,6 +42,7 @@ func main() {
 	router.GET("/hotels/:id", controller.GetHotelByID)
 	router.POST("/hotels", controller.InsertHotel)
 	router.DELETE("hotels/:id", controller.DeleteHotel)
+	router.PUT("hotels/:id", controller.UpdateHotel)
 
 	log.Println("Servidor corriendo en http://localhost:8080")
 	if err := router.Run(":8080"); err != nil {

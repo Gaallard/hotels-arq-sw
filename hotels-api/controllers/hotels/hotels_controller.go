@@ -15,6 +15,7 @@ type Service interface {
 	GetHotelByID(ctx context.Context, id int64) (hotelsDomain.Hotel, error)
 	InsertHotel(ctx context.Context, hotel hotelsDomain.Hotel) error
 	DeleteHotel(ctx context.Context, id int64) error
+	UpdateHotel(ctx context.Context, id int64, hotel hotelsDomain.Hotel) (hotelsDomain.Hotel, error)
 }
 
 type Controller struct {
@@ -99,4 +100,30 @@ func (controller Controller) DeleteHotel(ctx *gin.Context) {
 		"message": "hotel deleted successfully",
 	})
 
+}
+
+func (controller Controller) UpdateHotel(ctx *gin.Context) {
+
+	var hotel hotelsDomain.Hotel
+
+	if err := ctx.ShouldBindJSON(&hotel); err != nil {
+		ctx.JSON(http.StatusBadRequest, gin.H{
+			"error": fmt.Sprintf("Error passing hotel: %s", err),
+		})
+		return
+	}
+
+	updatedHotel, err := controller.service.UpdateHotel(ctx.Request.Context(), hotel.ID, hotel)
+
+	if err != nil {
+		ctx.JSON(http.StatusInternalServerError, gin.H{
+			"error": fmt.Sprintf("error updating hotel: %v", err),
+		})
+		return
+	}
+
+	ctx.JSON(http.StatusOK, gin.H{
+		"message": "hotel updated successfully",
+		"hotel":   updatedHotel,
+	})
 }

@@ -90,12 +90,12 @@ func (repository Mongo) DeleteHotel(ctx context.Context, id int64) error {
 	return nil
 }
 
-func (repository Mongo) UpdateHotel(ctx context.Context, id int64, hotelDomain hotelsDomain.Hotel) error {
+func (repository Mongo) UpdateHotel(ctx context.Context, id int64, hotelDomain hotelsDomain.Hotel) (hotelsDomain.Hotel, error) {
 	_, err := repository.client.Database(repository.database).Collection(repository.collection).UpdateOne(ctx, bson.M{"id": id}, bson.M{"$set": hotelDomain})
 
 	if err != nil {
-		return fmt.Errorf("Error finding hotel: %w", err)
+		return hotelsDomain.Hotel{}, fmt.Errorf("Error finding hotel: %w", err)
 	}
 
-	return nil
+	return hotelDomain, nil
 }
