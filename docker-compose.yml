@@ -18,7 +18,7 @@ services:
 
   mongo:
     image: mongo:latest
-    container_name: my-mongo
+    container_name: my-mongo2
     restart: always
     environment:
       MONGO_INITDB_ROOT_USERNAME: root
