@@ -3,10 +3,6 @@ package reservas
 import (
 	"context"
 	"fmt"
-	"go.mongodb.org/mongo-driver/bson"
-	"go.mongodb.org/mongo-driver/bson/primitive"
-	"go.mongodb.org/mongo-driver/mongo"
-	"go.mongodb.org/mongo-driver/mongo/options"
 	dao "reserva-api/dao"
 
 	"github.com/jinzhu/gorm"
@@ -82,76 +78,4 @@ func (repository SQL) UpdateReserva(ctx context.Context, reserva dao.Reserva) (d
 		return reserva, fmt.Errorf("error updating document:")
 	}
 	return result, nil
-}
-
-const (
-	connectionURI = "mongodb://%s:%s" // %s es marcador de puesto para el host y el puerto
-)
-
-type MongoConfig struct {
-	Host       string
-	Port       string
-	Username   string
-	Password   string
-	Database   string
-	Collection string
-}
-
-type Mongo struct {
-	client     *mongo.Client //cliente que contiene la conexion
-	database   string        //nombre de la base de datos
-	collection string        //coleccion
-}
-
-func NewMongo(config MongoConfig) Mongo {
-	credentials := options.Credential{
-		Username: config.Username,
-		Password: config.Password,
-	}
-
-	ctx := context.Background()                                 // para manejar cancelaciones o límites de tiempo en las operaciones.
-	uri := fmt.Sprintf(connectionURI, config.Host, config.Port) //Construye la URI de conexión utilizando el host y el puerto.
-	cfg := options.Client().ApplyURI(uri).SetAuth(credentials)  //Configura las opciones del cliente de MongoDB, incluyendo la URI y las credenciales de autenticación.
-
-	client, err := mongo.Connect(ctx, cfg)
-	if err != nil {
-		log.Panicf("error connecting to mongo DB: %v", err)
-	}
-
-	return Mongo{
-		client:     client,
-		database:   config.Database,
-		collection: config.Collection,
-	}
-}
-
-func (m Mongo) GetReservaById(id int64) (dao.Reserva, error) {
-	return dao.Reserva{}, nil
-}
-
-func (m Mongo) InsertReserva(ctx context.Context, reserva dao.Reserva) (dao.Reserva, error) {
-	return dao.Reserva{}, nil
-}
-
-func (m Mongo) UpdateReserva(ctx context.Context, reserva dao.Reserva) (dao.Reserva, error) {
-	return dao.Reserva{}, nil
-}
-
-func (m Mongo) CheckHotelExists(idHotel string) (bool, error) {
-	collection := m.client.Database(m.database).Collection(m.collection)
-	objectID, err := primitive.ObjectIDFromHex(idHotel)
-	if err != nil {
-		return false, fmt.Errorf("Hotel not found: %s", err)
-	}
-
-	filter := bson.M{"_id": objectID}
-	var result bson.M
-	err = collection.FindOne(context.TODO(), filter).Decode(&result)
-	if err != nil {
-		if err == mongo.ErrNoDocuments {
-			return false, nil
-		}
-		return false, fmt.Errorf("error finding hotel: %s", err)
-	}
-	return true, nil
 }

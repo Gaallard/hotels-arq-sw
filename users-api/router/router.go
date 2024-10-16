@@ -13,7 +13,7 @@ func MapUrls(engine *gin.Engine) {
 	engine.Use(middleware.CORSMiddleware())
 	engine.POST("/users/login", users.Login)
 	engine.POST("/users/register", users.RegisterUser)
-
+	engine.GET("users/:id", users.GetUserById)
 	//authorized := engine.Group("")
 	//authorized.Use(middleware.AuthMiddleware())
 	//{

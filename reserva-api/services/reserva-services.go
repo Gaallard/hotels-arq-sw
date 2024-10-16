@@ -3,6 +3,7 @@ package reservas
 import (
 	"context"
 	"fmt"
+	"net/http"
 	dao "reserva-api/dao"
 	domain "reserva-api/domain"
 )
@@ -11,17 +12,14 @@ type Repository interface {
 	GetReservaById(id int64) (dao.Reserva, error)
 	InsertReserva(ctx context.Context, reserva dao.Reserva) (dao.Reserva, error)
 	UpdateReserva(ctx context.Context, reserva dao.Reserva) (dao.Reserva, error)
-	CheckHotelExists(idHotel string) (bool, error)
 }
 type Service struct {
-	mainRepo  Repository
-	mongoRepo Repository
+	mainRepo Repository
 }
 
-func NewService(mainRepo Repository, mongoRepo Repository) Service {
+func NewService(mainRepo Repository) Service {
 	return Service{
-		mainRepo:  mainRepo,
-		mongoRepo: mongoRepo,
+		mainRepo: mainRepo,
 	}
 }
 
@@ -49,20 +47,36 @@ func (service Service) InsertReserva(ctx context.Context, reserva domain.Reserva
 	Reserva.Hotel = reserva.Hotel
 	Reserva.Estado = int(reserva.Estado)
 
-	hotelExists, err := service.mongoRepo.CheckHotelExists(Reserva.Hotel)
-
+	//comprobamos existencia del hotel en Mongo llamando a hotels-api
+	urlHotel := fmt.Sprintf("localhost:8080/hotels/%s ", reserva.Hotel)
+	response, err := http.Get(urlHotel)
 	if err != nil {
-		return domain.Reserva{}, fmt.Errorf("error checking hotel exists: %v", err)
+		return domain.Reserva{}, fmt.Errorf("error getting hotel from server: %v", err)
+	}
+	if response.StatusCode != http.StatusOK {
+		return domain.Reserva{}, fmt.Errorf("Unexpected error with status code: %d", response.Status)
+	}
+	if response.StatusCode == http.StatusNotFound {
+		return domain.Reserva{}, fmt.Errorf("hotel not found with ID: %s", reserva.Hotel)
 	}
 
-	if !hotelExists {
-		return domain.Reserva{}, fmt.Errorf("hotel does not exist")
+	//comprobamos existencia de usuario llamando a users-api
+	urlUser := fmt.Sprintf("localhost:8080/users/%s ", reserva.User)
+	response, err = http.Get(urlUser)
+	if err != nil {
+		return domain.Reserva{}, fmt.Errorf("error getting user from server: %v", err)
+	}
+	if response.StatusCode != http.StatusOK {
+		return domain.Reserva{}, fmt.Errorf("Unexpected error with status code: %d", response.Status)
+	}
+	if response.StatusCode == http.StatusNotFound {
+		return domain.Reserva{}, fmt.Errorf("user not found with ID: %s", reserva.User)
 	}
 
 	reservaDomain, err := service.mainRepo.InsertReserva(ctx, Reserva)
 	if err != nil {
 
-		return reserva, fmt.Errorf("Error insertar reserva service")
+		return reserva, fmt.Errorf("Error creando la reserva")
 	}
 	reserva.ID = reservaDomain.ID
 	return reserva, nil
@@ -84,12 +98,4 @@ func (service Service) UpdateReserva(ctx context.Context, reserva domain.Reserva
 	reserva.Noches = int64(reservaDomain.Noches)
 
 	return reserva, nil
-}
-
-func (service Service) CheckHotelExists(idHotel string) (bool, error) {
-	exists, err := service.mongoRepo.CheckHotelExists(idHotel)
-	if err != nil {
-		return false, fmt.Errorf("Error checking hotel from repository: %v", err)
-	}
-	return exists, nil
 }
