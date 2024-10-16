@@ -80,16 +80,6 @@ func (repository Mongo) InsertHotel(ctx context.Context, hotel hotelsDAO.Hotel) 
 	return nil
 }
 
-func (repository Mongo) DeleteHotel(ctx context.Context, id int64) error {
-	_, err := repository.client.Database(repository.database).Collection(repository.collection).DeleteOne(ctx, bson.M{"id": id})
-
-	if err != nil {
-		return fmt.Errorf("Error finding hotel: %w", err)
-	}
-
-	return nil
-}
-
 func (repository Mongo) UpdateHotel(ctx context.Context, id int64, hotelDomain hotelsDomain.Hotel) (hotelsDomain.Hotel, error) {
 	_, err := repository.client.Database(repository.database).Collection(repository.collection).UpdateOne(ctx, bson.M{"id": id}, bson.M{"$set": hotelDomain})
 

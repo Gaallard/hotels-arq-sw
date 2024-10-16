@@ -61,14 +61,6 @@ func (repo Cache) InsertHotel(ctx context.Context, hotel hotelsDAO.Hotel) error 
 	return nil
 }
 
-func (repo Cache) DeleteHotel(ctx context.Context, id int64) error {
-
-	key := fmt.Sprintf(keyFormat, id)
-	repo.client.Delete(key)
-
-	return nil
-}
-
 func (repo Cache) UpdateHotel(ctx context.Context, id int64, hotel hotelsDomain.Hotel) (hotelsDomain.Hotel, error) {
 	key := fmt.Sprintf(keyFormat, id)
 

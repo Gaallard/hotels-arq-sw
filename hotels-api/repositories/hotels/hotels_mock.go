@@ -37,6 +37,6 @@ func (repository Mock) InsertHotel(ctx context.Context, hotel hotelsDAO.Hotel) e
 	return nil
 }
 
-func (repository Mock) DeleteHotel(ctx context.Context, id int64) error {
-	return nil
+func (repository Mock) UpdateHotel(ctx context.Context, id int64, hotel hotelsDAO.Hotel) (hotelsDAO.Hotel, error) {
+	return repository.docs[id], nil
 }

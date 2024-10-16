@@ -22,8 +22,18 @@ func main() {
 		Host: "localhost",
 	}
 
+	mongoConfig := repo.MongoConfig{
+		Host:       "localhost",
+		Port:       "27017",
+		Username:   "root",
+		Password:   "root",
+		Database:   "hotels",
+		Collection: "hotels",
+	}
+
+	mongoRepo := repo.NewMongo(mongoConfig)
 	mainRepo := repo.NewSql(sqlconfig)
-	Service := service.NewService(mainRepo)
+	Service := service.NewService(mainRepo, mongoRepo)
 	Controller := controller.NewController(Service)
 	router := gin.Default()
 	router.GET("/reservas/:id", Controller.GetReservaById)

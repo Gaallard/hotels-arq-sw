@@ -14,7 +14,6 @@ import (
 type Service interface {
 	GetHotelByID(ctx context.Context, id int64) (hotelsDomain.Hotel, error)
 	InsertHotel(ctx context.Context, hotel hotelsDomain.Hotel) error
-	DeleteHotel(ctx context.Context, id int64) error
 	UpdateHotel(ctx context.Context, id int64, hotel hotelsDomain.Hotel) (hotelsDomain.Hotel, error)
 }
 
@@ -72,32 +71,6 @@ func (controller Controller) InsertHotel(ctx *gin.Context) {
 	ctx.JSON(http.StatusOK, gin.H{
 		"message": "hotel created successfully",
 		"hotel":   hotel,
-	})
-
-}
-
-func (controller Controller) DeleteHotel(ctx *gin.Context) {
-
-	idParam := strings.TrimSpace(ctx.Param("id"))
-	id, err := strconv.ParseInt(idParam, 10, 64)
-	if err != nil {
-		ctx.JSON(http.StatusBadRequest, gin.H{
-			"error": fmt.Sprintf("invalid id: %s", idParam),
-		})
-		return
-	}
-
-	// Get hotel by ID using the service
-	err = controller.service.DeleteHotel(ctx.Request.Context(), id)
-	if err != nil {
-		ctx.JSON(http.StatusInternalServerError, gin.H{
-			"error": fmt.Sprintf("error deleting hotel: %s", err.Error()),
-		})
-		return
-	}
-
-	ctx.JSON(http.StatusOK, gin.H{
-		"message": "hotel deleted successfully",
 	})
 
 }
