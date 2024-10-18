@@ -3,6 +3,7 @@ package hotels
 import (
 	"context"
 	"fmt"
+	"go.mongodb.org/mongo-driver/bson/primitive"
 	hotelsDAO "hotels-api/dao/hotels"
 	hotelsDomain "hotels-api/domain/hotels"
 	"log"
@@ -53,10 +54,11 @@ func NewMongo(config MongoConfig) Mongo {
 	}
 }
 
-func (repository Mongo) GetHotelByID(ctx context.Context, id int64) (hotelsDAO.Hotel, error) {
+func (repository Mongo) GetHotelByID(ctx context.Context, id primitive.ObjectID) (hotelsDAO.Hotel, error) {
 	// Get from MongoDB
-	result := repository.client.Database(repository.database).Collection(repository.collection).FindOne(ctx, bson.M{"id": id})
+	result := repository.client.Database(repository.database).Collection(repository.collection).FindOne(ctx, bson.M{"_id": id})
 	if result.Err() != nil {
+
 		return hotelsDAO.Hotel{}, fmt.Errorf("error finding document: %w", result.Err())
 	}
 
@@ -68,30 +70,21 @@ func (repository Mongo) GetHotelByID(ctx context.Context, id int64) (hotelsDAO.H
 	return hotelDAO, nil
 }
 
-func (repository Mongo) InsertHotel(ctx context.Context, hotel hotelsDAO.Hotel) error {
+func (repository Mongo) InsertHotel(ctx context.Context, hotel hotelsDAO.Hotel) (error, string) {
 	result, err := repository.client.Database(repository.database).Collection(repository.collection).InsertOne(ctx, hotel)
 	if err != nil {
-		return fmt.Errorf("Error inserting new hotel: %w", err)
+		return fmt.Errorf("Error inserting new hotel: %w", err), ""
 	}
 
-	// Opcionalmente, puedes usar el resultado aquí
-	fmt.Printf("Inserted hotel with ID: %v\n", result.InsertedID)
+	// Convertir el InsertedID a string
+	insertedId := result.InsertedID.(primitive.ObjectID).Hex()
 
-	return nil
+	fmt.Sprintf("Inserted hotel with ID: %s\n", insertedId)
+	return nil, insertedId
 }
 
-func (repository Mongo) DeleteHotel(ctx context.Context, id int64) error {
-	_, err := repository.client.Database(repository.database).Collection(repository.collection).DeleteOne(ctx, bson.M{"id": id})
-
-	if err != nil {
-		return fmt.Errorf("Error finding hotel: %w", err)
-	}
-
-	return nil
-}
-
-func (repository Mongo) UpdateHotel(ctx context.Context, id int64, hotelDomain hotelsDomain.Hotel) (hotelsDomain.Hotel, error) {
-	_, err := repository.client.Database(repository.database).Collection(repository.collection).UpdateOne(ctx, bson.M{"id": id}, bson.M{"$set": hotelDomain})
+func (repository Mongo) UpdateHotel(ctx context.Context, id primitive.ObjectID, hotelDomain hotelsDomain.Hotel) (hotelsDomain.Hotel, error) {
+	_, err := repository.client.Database(repository.database).Collection(repository.collection).UpdateOne(ctx, bson.M{"_id": id}, bson.M{"$set": hotelDomain})
 
 	if err != nil {
 		return hotelsDomain.Hotel{}, fmt.Errorf("Error finding hotel: %w", err)

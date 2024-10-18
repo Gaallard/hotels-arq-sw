@@ -56,3 +56,23 @@ func Login(request dto.UserDto) (token.TokenDto, e.ApiError) {
 	}
 
 }
+
+func GetHotelById(idUser int) (dto.UserDto, e.ApiError) {
+	userModel, err := client.GetUserById(idUser)
+
+	user := ModelToDto(userModel)
+	if err != nil {
+		return dto.UserDto{}, err
+	}
+
+	return user, nil
+}
+
+func ModelToDto(user model.User) dto.UserDto {
+	return dto.UserDto{
+		ID:       user.Id_user,
+		Username: user.Username,
+		Password: user.Password,
+		Role:     user.Role,
+	}
+}

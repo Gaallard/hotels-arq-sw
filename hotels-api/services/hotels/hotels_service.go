@@ -3,16 +3,16 @@ package hotels
 import (
 	"context"
 	"fmt"
+	"go.mongodb.org/mongo-driver/bson/primitive"
 	"hotels-api/dao/hotels"
 	hotelsDAO "hotels-api/dao/hotels"
 	hotelsDomain "hotels-api/domain/hotels"
 )
 
 type Repository interface {
-	GetHotelByID(ctx context.Context, id int64) (hotels.Hotel, error)
-	InsertHotel(ctx context.Context, hotel hotelsDAO.Hotel) error
-	DeleteHotel(ctx context.Context, id int64) error
-	UpdateHotel(ctx context.Context, id int64, hotel hotelsDomain.Hotel) (hotelsDomain.Hotel, error)
+	GetHotelByID(ctx context.Context, id primitive.ObjectID) (hotels.Hotel, error)
+	InsertHotel(ctx context.Context, hotel hotelsDAO.Hotel) (error, string)
+	UpdateHotel(ctx context.Context, id primitive.ObjectID, hotel hotelsDomain.Hotel) (hotelsDomain.Hotel, error)
 }
 
 type Service struct {
@@ -27,7 +27,7 @@ func NewService(mainRepository Repository, cacheRepository Repository) Service {
 	}
 }
 
-func (service Service) GetHotelByID(ctx context.Context, id int64) (hotelsDomain.Hotel, error) {
+func (service Service) GetHotelByID(ctx context.Context, id primitive.ObjectID) (hotelsDomain.Hotel, error) {
 	hotelDAO, err := service.cacheRepository.GetHotelByID(ctx, id)
 	if err != nil {
 		// Get hotel from main repository
@@ -41,56 +41,45 @@ func (service Service) GetHotelByID(ctx context.Context, id int64) (hotelsDomain
 
 	// Convert DAO to DTO
 	return hotelsDomain.Hotel{
-		ID:        hotelDAO.ID,
-		Name:      hotelDAO.Name,
-		Address:   hotelDAO.Address,
-		City:      hotelDAO.City,
-		State:     hotelDAO.State,
-		Rating:    hotelDAO.Rating,
-		Amenities: hotelDAO.Amenities,
+		ID:              hotelDAO.ID,
+		Name:            hotelDAO.Name,
+		Address:         hotelDAO.Address,
+		City:            hotelDAO.City,
+		State:           hotelDAO.State,
+		Rating:          hotelDAO.Rating,
+		Amenities:       hotelDAO.Amenities,
+		Price:           hotelDAO.Price,
+		Available_rooms: hotelDAO.Available_rooms,
 	}, nil
 }
 
-func (service Service) InsertHotel(ctx context.Context, hotel hotelsDomain.Hotel) error {
+func (service Service) InsertHotel(ctx context.Context, hotel hotelsDomain.Hotel) (error, string) {
 
 	hotelDAO := hotelsDAO.Hotel{
-		ID:        hotel.ID,
-		Name:      hotel.Name,
-		Address:   hotel.Address,
-		City:      hotel.City,
-		State:     hotel.State,
-		Rating:    hotel.Rating,
-		Amenities: hotel.Amenities,
+		Name:            hotel.Name,
+		Address:         hotel.Address,
+		City:            hotel.City,
+		State:           hotel.State,
+		Rating:          hotel.Rating,
+		Amenities:       hotel.Amenities,
+		Price:           hotel.Price,
+		Available_rooms: hotel.Available_rooms,
 	}
 
-	if err := service.mainRepository.InsertHotel(ctx, hotelDAO); err != nil {
-		return fmt.Errorf("Error inserting hotel into main repository: %v", err)
+	err, insertedId := service.mainRepository.InsertHotel(ctx, hotelDAO)
+	if err != nil {
+		return fmt.Errorf("Error inserting hotel into main repository: %v", err), ""
 	}
 
-	if err := service.cacheRepository.InsertHotel(ctx, hotelDAO); err != nil {
-		return fmt.Errorf("Error inserting hotel into cache: %v", err)
+	err, insertedId = service.cacheRepository.InsertHotel(ctx, hotelDAO)
+	if err != nil {
+		return fmt.Errorf("Error inserting hotel into cache: %v", err), insertedId
 	}
 
-	return nil
+	return nil, insertedId
 }
 
-func (service Service) DeleteHotel(ctx context.Context, id int64) error {
-	// Intenta eliminar el hotel del main repository
-	err := service.mainRepository.DeleteHotel(ctx, id)
-	if err != nil {
-		return fmt.Errorf("error deleting hotel from repository: %v", err)
-	}
-
-	// Intenta eliminar el hotel del cache repository (si existe)
-	err = service.cacheRepository.DeleteHotel(ctx, id)
-	if err != nil {
-		fmt.Printf("Error deleting hotel from cache: %v\n", err)
-	}
-
-	return nil
-}
-
-func (service Service) UpdateHotel(ctx context.Context, id int64, hotel hotelsDomain.Hotel) (hotelsDomain.Hotel, error) {
+func (service Service) UpdateHotel(ctx context.Context, id primitive.ObjectID, hotel hotelsDomain.Hotel) (hotelsDomain.Hotel, error) {
 
 	updatedHotel, err := service.mainRepository.UpdateHotel(ctx, id, hotel)
 	if err != nil {

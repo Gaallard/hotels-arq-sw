@@ -9,10 +9,6 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
-type Controller interface {
-	GetHotelByID(ctx *gin.Context)
-}
-
 func main() {
 
 	router := gin.Default()
@@ -41,7 +37,6 @@ func main() {
 	// Router
 	router.GET("/hotels/:id", controller.GetHotelByID)
 	router.POST("/hotels", controller.InsertHotel)
-	router.DELETE("hotels/:id", controller.DeleteHotel)
 	router.PUT("hotels/:id", controller.UpdateHotel)
 
 	log.Println("Servidor corriendo en http://localhost:8080")

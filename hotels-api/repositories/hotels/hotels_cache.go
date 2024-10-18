@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"go.mongodb.org/mongo-driver/bson/primitive"
 	hotelsDAO "hotels-api/dao/hotels"
 	hotelsDomain "hotels-api/domain/hotels"
 	"time"
@@ -34,9 +35,8 @@ func NewCache(config CacheConfig) Cache {
 	}
 }
 
-func (repo Cache) GetHotelByID(ctx context.Context, id int64) (hotelsDAO.Hotel, error) {
-
-	key := fmt.Sprintf(keyFormat, id)
+func (repo Cache) GetHotelByID(ctx context.Context, id primitive.ObjectID) (hotelsDAO.Hotel, error) {
+	key := id.Hex()
 	item := repo.client.Get(key) //obtiene el id del hotel
 
 	if item == nil {
@@ -45,32 +45,22 @@ func (repo Cache) GetHotelByID(ctx context.Context, id int64) (hotelsDAO.Hotel, 
 
 	hotelDAO, ok := item.Value().(hotelsDAO.Hotel)
 	if !ok {
-		return hotelsDAO.Hotel{},
-			fmt.Errorf("error converting item with key %s", key)
+		return hotelsDAO.Hotel{}, fmt.Errorf("error converting item with key %s", key)
 	}
 	return hotelDAO, nil
 }
 
-func (repo Cache) InsertHotel(ctx context.Context, hotel hotelsDAO.Hotel) error {
-
-	key := fmt.Sprintf(keyFormat, hotel.ID)
+func (repo Cache) InsertHotel(ctx context.Context, hotel hotelsDAO.Hotel) (error, string) {
+	key := hotel.IdMongo.Hex()
 
 	expiration := 5 * time.Minute
 	repo.client.Set(key, hotel, expiration) //setea el id del hotel
 
-	return nil
+	return nil, key
 }
 
-func (repo Cache) DeleteHotel(ctx context.Context, id int64) error {
-
-	key := fmt.Sprintf(keyFormat, id)
-	repo.client.Delete(key)
-
-	return nil
-}
-
-func (repo Cache) UpdateHotel(ctx context.Context, id int64, hotel hotelsDomain.Hotel) (hotelsDomain.Hotel, error) {
-	key := fmt.Sprintf(keyFormat, id)
+func (repo Cache) UpdateHotel(ctx context.Context, id primitive.ObjectID, hotel hotelsDomain.Hotel) (hotelsDomain.Hotel, error) {
+	key := fmt.Sprintf(keyFormat, id.Hex())
 
 	hotelJSON, err := json.Marshal(hotel)
 	if err != nil {

@@ -2,6 +2,7 @@ package users
 
 import (
 	"net/http"
+	"strconv"
 	dtoUsers "users-api/users-api/dto"
 	"users-api/users-api/service"
 
@@ -25,6 +26,21 @@ func Login(context *gin.Context) {
 	response, err := users.Login(loginRequest)
 	if err != nil {
 		context.JSON(err.Status(), err)
+		return
+	}
+	context.JSON(http.StatusOK, response)
+}
+
+func GetUserById(context *gin.Context) {
+	idParam := context.Param("idUser")
+	idUser, err := strconv.Atoi(idParam)
+	if err != nil {
+		context.JSON(http.StatusBadRequest, err)
+	}
+
+	response, apiErr := users.GetHotelById(idUser)
+	if apiErr != nil {
+		context.JSON(apiErr.Status(), apiErr)
 		return
 	}
 	context.JSON(http.StatusOK, response)
