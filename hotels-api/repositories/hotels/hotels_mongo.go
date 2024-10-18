@@ -3,10 +3,10 @@ package hotels
 import (
 	"context"
 	"fmt"
-	"go.mongodb.org/mongo-driver/bson/primitive"
 	hotelsDAO "hotels-api/dao/hotels"
-	hotelsDomain "hotels-api/domain/hotels"
 	"log"
+
+	"go.mongodb.org/mongo-driver/bson/primitive"
 
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/mongo"
@@ -70,25 +70,27 @@ func (repository Mongo) GetHotelByID(ctx context.Context, id primitive.ObjectID)
 	return hotelDAO, nil
 }
 
-func (repository Mongo) InsertHotel(ctx context.Context, hotel hotelsDAO.Hotel) (error, string) {
+func (repository Mongo) InsertHotel(ctx context.Context, hotel hotelsDAO.Hotel) (primitive.ObjectID, error) {
 	result, err := repository.client.Database(repository.database).Collection(repository.collection).InsertOne(ctx, hotel)
 	if err != nil {
-		return fmt.Errorf("Error inserting new hotel: %w", err), ""
+		return primitive.NilObjectID, fmt.Errorf("Error inserting new hotel: %w", err)
 	}
 
-	// Convertir el InsertedID a string
-	insertedId := result.InsertedID.(primitive.ObjectID).Hex()
+	insertedId := result.InsertedID.(primitive.ObjectID)
 
 	fmt.Sprintf("Inserted hotel with ID: %s\n", insertedId)
-	return nil, insertedId
+	return hotel.IdMongo, nil
 }
 
-func (repository Mongo) UpdateHotel(ctx context.Context, id primitive.ObjectID, hotelDomain hotelsDomain.Hotel) (hotelsDomain.Hotel, error) {
-	_, err := repository.client.Database(repository.database).Collection(repository.collection).UpdateOne(ctx, bson.M{"_id": id}, bson.M{"$set": hotelDomain})
-
-	if err != nil {
-		return hotelsDomain.Hotel{}, fmt.Errorf("Error finding hotel: %w", err)
+func (repository Mongo) UpdateHotel(ctx context.Context, id primitive.ObjectID, hotel hotelsDAO.Hotel) (hotelsDAO.Hotel, error) {
+	result := repository.client.Database(repository.database).Collection(repository.collection).FindOneAndUpdate(ctx, bson.M{"_id": id}, bson.M{"$set": hotel})
+	if result.Err() != nil {
+		return hotelsDAO.Hotel{}, fmt.Errorf("Error finding hotel: %w", result.Err())
 	}
 
-	return hotelDomain, nil
+	var hotelDAO hotelsDAO.Hotel
+	if err := result.Decode(&hotelDAO); err != nil {
+		return hotelsDAO.Hotel{}, fmt.Errorf("error decoding result: %w", err)
+	}
+	return hotelDAO, nil
 }

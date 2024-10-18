@@ -4,10 +4,10 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"go.mongodb.org/mongo-driver/bson/primitive"
 	hotelsDAO "hotels-api/dao/hotels"
-	hotelsDomain "hotels-api/domain/hotels"
 	"time"
+
+	"go.mongodb.org/mongo-driver/bson/primitive"
 
 	"github.com/karlseguin/ccache"
 	_ "github.com/karlseguin/ccache"
@@ -50,21 +50,24 @@ func (repo Cache) GetHotelByID(ctx context.Context, id primitive.ObjectID) (hote
 	return hotelDAO, nil
 }
 
-func (repo Cache) InsertHotel(ctx context.Context, hotel hotelsDAO.Hotel) (error, string) {
-	key := hotel.IdMongo.Hex()
+func (repo Cache) InsertHotel(ctx context.Context, hotel hotelsDAO.Hotel) (primitive.ObjectID, error) {
+	key := hotel.IdMongo
+	auxKey := hotel.IdMongo.Hex()
 
 	expiration := 5 * time.Minute
-	repo.client.Set(key, hotel, expiration) //setea el id del hotel
 
-	return nil, key
+	repo.client.Set(auxKey, hotel, expiration)
+
+	return key, nil
 }
 
-func (repo Cache) UpdateHotel(ctx context.Context, id primitive.ObjectID, hotel hotelsDomain.Hotel) (hotelsDomain.Hotel, error) {
-	key := fmt.Sprintf(keyFormat, id.Hex())
+func (repo Cache) UpdateHotel(ctx context.Context, id primitive.ObjectID, hotel hotelsDAO.Hotel) (hotelsDAO.Hotel, error) {
+
+	key := id.Hex()
 
 	hotelJSON, err := json.Marshal(hotel)
 	if err != nil {
-		return hotelsDomain.Hotel{}, fmt.Errorf("error serializing hotel to JSON: %v", err)
+		return hotelsDAO.Hotel{}, fmt.Errorf("error serializing hotel to JSON: %", err)
 	}
 
 	expiration := 5 * time.Minute

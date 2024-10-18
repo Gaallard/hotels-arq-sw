@@ -3,16 +3,17 @@ package hotels
 import (
 	"context"
 	"fmt"
-	"go.mongodb.org/mongo-driver/bson/primitive"
 	"hotels-api/dao/hotels"
 	hotelsDAO "hotels-api/dao/hotels"
 	hotelsDomain "hotels-api/domain/hotels"
+
+	"go.mongodb.org/mongo-driver/bson/primitive"
 )
 
 type Repository interface {
 	GetHotelByID(ctx context.Context, id primitive.ObjectID) (hotels.Hotel, error)
-	InsertHotel(ctx context.Context, hotel hotelsDAO.Hotel) (error, string)
-	UpdateHotel(ctx context.Context, id primitive.ObjectID, hotel hotelsDomain.Hotel) (hotelsDomain.Hotel, error)
+	InsertHotel(ctx context.Context, hotel hotels.Hotel) (primitive.ObjectID, error)
+	UpdateHotel(ctx context.Context, id primitive.ObjectID, hotel hotels.Hotel) (hotels.Hotel, error)
 }
 
 type Service struct {
@@ -42,6 +43,7 @@ func (service Service) GetHotelByID(ctx context.Context, id primitive.ObjectID) 
 	// Convert DAO to DTO
 	return hotelsDomain.Hotel{
 		ID:              hotelDAO.ID,
+		IdMongo:         hotelDAO.IdMongo,
 		Name:            hotelDAO.Name,
 		Address:         hotelDAO.Address,
 		City:            hotelDAO.City,
@@ -53,9 +55,10 @@ func (service Service) GetHotelByID(ctx context.Context, id primitive.ObjectID) 
 	}, nil
 }
 
-func (service Service) InsertHotel(ctx context.Context, hotel hotelsDomain.Hotel) (error, string) {
+func (service Service) InsertHotel(ctx context.Context, hotel hotelsDomain.Hotel) (primitive.ObjectID, error) {
 
 	hotelDAO := hotelsDAO.Hotel{
+		// IdMongo:         hotel.IdMongo,
 		Name:            hotel.Name,
 		Address:         hotel.Address,
 		City:            hotel.City,
@@ -66,30 +69,51 @@ func (service Service) InsertHotel(ctx context.Context, hotel hotelsDomain.Hotel
 		Available_rooms: hotel.Available_rooms,
 	}
 
-	err, insertedId := service.mainRepository.InsertHotel(ctx, hotelDAO)
+	_, err := service.mainRepository.InsertHotel(ctx, hotelDAO)
 	if err != nil {
-		return fmt.Errorf("Error inserting hotel into main repository: %v", err), ""
+		return primitive.NilObjectID, fmt.Errorf("Error inserting hotel into main repository: %v", err)
 	}
 
-	err, insertedId = service.cacheRepository.InsertHotel(ctx, hotelDAO)
+	_, err = service.cacheRepository.InsertHotel(ctx, hotelDAO)
 	if err != nil {
-		return fmt.Errorf("Error inserting hotel into cache: %v", err), insertedId
+		return primitive.NilObjectID, fmt.Errorf("Error inserting hotel into cache: %v", err)
 	}
 
-	return nil, insertedId
+	return primitive.NewObjectID(), nil
 }
 
 func (service Service) UpdateHotel(ctx context.Context, id primitive.ObjectID, hotel hotelsDomain.Hotel) (hotelsDomain.Hotel, error) {
 
-	updatedHotel, err := service.mainRepository.UpdateHotel(ctx, id, hotel)
-	if err != nil {
-		return hotelsDomain.Hotel{}, fmt.Errorf("Error updating hotel into main repository: %v", err)
+	hotelDAO := hotelsDAO.Hotel{
+		// IdMongo:         hotel.IdMongo,
+		Name:            hotel.Name,
+		Address:         hotel.Address,
+		City:            hotel.City,
+		State:           hotel.State,
+		Rating:          hotel.Rating,
+		Amenities:       hotel.Amenities,
+		Price:           hotel.Price,
+		Available_rooms: hotel.Available_rooms,
 	}
 
-	_, err = service.cacheRepository.UpdateHotel(ctx, id, hotel)
+	newHotelDAO, err := service.cacheRepository.UpdateHotel(ctx, id, hotelDAO)
 	if err != nil {
-		return hotelsDomain.Hotel{}, fmt.Errorf("Error updating hotel into cache: %v", err)
+		newHotelDAO, err = service.mainRepository.UpdateHotel(ctx, id, hotelDAO)
+		if err != nil {
+			return hotelsDomain.Hotel{}, fmt.Errorf("error getting hotel from repository: %v", err)
+		}
 	}
 
-	return updatedHotel, nil
+	return hotelsDomain.Hotel{
+		ID:              newHotelDAO.ID,
+		IdMongo:         newHotelDAO.IdMongo,
+		Name:            newHotelDAO.Name,
+		Address:         newHotelDAO.Address,
+		City:            newHotelDAO.City,
+		State:           newHotelDAO.State,
+		Rating:          newHotelDAO.Rating,
+		Amenities:       newHotelDAO.Amenities,
+		Price:           newHotelDAO.Price,
+		Available_rooms: newHotelDAO.Available_rooms,
+	}, nil
 }
