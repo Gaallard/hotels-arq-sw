@@ -1,4 +1,4 @@
-package hotels
+package domain
 
 import "go.mongodb.org/mongo-driver/bson/primitive"
 
@@ -13,9 +13,4 @@ type Hotel struct {
 	Amenities       []string           `json:"amenities"`
 	Price           float64            `json:"price"`
 	Available_rooms int64              `json:"available_rooms"`
-}
-
-type HotelNew struct {
-	Operation string `json:"operation"`
-	HotelID   string `json:"hotel_id"`
 }
