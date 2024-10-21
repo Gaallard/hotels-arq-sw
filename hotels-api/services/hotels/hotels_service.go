@@ -16,15 +16,21 @@ type Repository interface {
 	UpdateHotel(ctx context.Context, id primitive.ObjectID, hotel hotels.Hotel) (hotels.Hotel, error)
 }
 
+type RabbitMQ interface {
+	Publish(id primitive.ObjectID)
+}
+
 type Service struct {
 	mainRepository  Repository
 	cacheRepository Repository
+	rabbitRpo       RabbitMQ
 }
 
-func NewService(mainRepository Repository, cacheRepository Repository) Service {
+func NewService(mainRepository Repository, cacheRepository Repository, rabbitRepo RabbitMQ) Service {
 	return Service{
 		mainRepository:  mainRepository,
 		cacheRepository: cacheRepository,
+		rabbitRpo:       rabbitRepo,
 	}
 }
 
@@ -39,7 +45,8 @@ func (service Service) GetHotelByID(ctx context.Context, id primitive.ObjectID) 
 
 		// TODO: service.cacheRepository.CreateHotel
 	}
-
+	// prueba que envia mensaje, cambiar dsp en funciones utiles
+	service.rabbitRpo.Publish(id)
 	// Convert DAO to DTO
 	return hotelsDomain.Hotel{
 		ID:              hotelDAO.ID,
@@ -78,7 +85,7 @@ func (service Service) InsertHotel(ctx context.Context, hotel hotelsDomain.Hotel
 	if err != nil {
 		return primitive.NilObjectID, fmt.Errorf("Error inserting hotel into cache: %v", err)
 	}
-
+	//service.rabbitRpo.Publish(primitive.NewObjectID())
 	return primitive.NewObjectID(), nil
 }
 

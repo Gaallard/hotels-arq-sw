@@ -2,8 +2,10 @@ package hotels
 
 import (
 	"fmt"
-	"github.com/streadway/amqp"
 	"log"
+
+	"github.com/streadway/amqp"
+	"go.mongodb.org/mongo-driver/bson/primitive"
 )
 
 type Publisher struct {
@@ -13,7 +15,7 @@ type Publisher struct {
 }
 
 func NewPublisher(user string, password string, host string, port string, queueName string) Publisher {
-	connection, err := amqp.Dial(fmt.Sprintf("amqp://%s:%s@:%s:%s", user, password, host, port))
+	connection, err := amqp.Dial(fmt.Sprintf("amqp://%s:%s@%s:%s", user, password, host, port))
 	if err != nil {
 		log.Panicf("Error connecting to RabbitMQ: %v", err)
 	}
@@ -42,13 +44,13 @@ func NewPublisher(user string, password string, host string, port string, queueN
 	}
 }
 
-func (p Publisher) Publish(id int64) {
+func (p Publisher) Publish(id primitive.ObjectID) {
 	_ = p.Channel.Publish(
 		"",
 		p.Queue.Name,
 		false,
 		false,
 		amqp.Publishing{
-			Body: []byte(fmt.Sprintf("{id:%d}", id)),
+			Body: []byte(fmt.Sprintf("{_id:%d}", 89898)),
 		})
 }

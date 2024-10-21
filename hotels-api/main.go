@@ -22,16 +22,24 @@ func main() {
 	mongoConfig := hotelsRepository.MongoConfig{
 		Host:       "localhost",
 		Port:       "27017",
-		Username:   "root",
-		Password:   "root",
+		Username:   "frantmateos",
+		Password:   "Tomas1927",
 		Database:   "hotels",
 		Collection: "hotels",
 	}
 
+	HostR := "localhost"
+	PortR := "5672"
+	UsernameR := "guest"
+	PasswordR := "guest"
+	QueueR := "hoteUCC"
+
 	// Dependencies
+	rabbitRpo := hotelsRepository.NewPublisher(UsernameR, PasswordR, HostR, PortR, QueueR)
 	mainRepository := hotelsRepository.NewMongo(mongoConfig)
 	cacheRepository := hotelsRepository.NewCache(cacheConfig)
-	service := hotelsService.NewService(mainRepository, cacheRepository)
+	//le el rabiitpubliser al service
+	service := hotelsService.NewService(mainRepository, cacheRepository, rabbitRpo)
 	controller := hotelsController.NewController(service)
 
 	// Router

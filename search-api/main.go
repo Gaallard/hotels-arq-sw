@@ -1,11 +1,13 @@
 package main
 
 import (
-	"github.com/gin-gonic/gin"
 	"log"
+	clients "search-api/clients/queues"
 	controllers "search-api/controller"
 	search "search-api/respositories"
 	services "search-api/services"
+
+	"github.com/gin-gonic/gin"
 )
 
 func main() {
@@ -14,10 +16,20 @@ func main() {
 		BaseURL:    "",
 		Collection: "hotels",
 	}
+
+	rabbit := clients.RabbitConfig{
+		Host:      "localhost",
+		Port:      "5672",
+		Username:  "guest",
+		Password:  "guest",
+		QueueName: "hoteUCC",
+	}
+
+	rabbitRpo := clients.NewRabbit(rabbit)
 	solrRepo := search.NewSolr(solrConfig)
 
-	// Services
-	service := services.NewService(solrRepo)
+	// Services, le di el rabbit al service
+	service := services.NewService(solrRepo, rabbitRpo)
 
 	// Handlers
 	controller := controllers.NewController(service)
@@ -30,7 +42,7 @@ func main() {
 	router.GET("/hotels/search", controller.Search)
 
 	// Run application
-	if err := router.Run(":8080"); err != nil {
+	if err := router.Run(":8081"); err != nil {
 		log.Panicf("Error running application: %v", err)
 	}
 }

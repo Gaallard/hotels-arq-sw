@@ -1,5 +1,6 @@
 package search
 
+/*
 import (
 	"context"
 	"search-api/dao"
@@ -28,3 +29,4 @@ func (repo Mock) Search(ctx context.Context, query string, offset int, limit int
 	}
 	return result, nil
 }
+*/

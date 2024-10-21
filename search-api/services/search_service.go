@@ -3,6 +3,7 @@ package search
 import (
 	"context"
 	"fmt"
+	"log"
 	"search-api/dao"
 	"search-api/domain"
 )
@@ -11,17 +12,28 @@ type Repository interface {
 	Search(ctx context.Context, query string, offset int, limit int) ([]dao.Hotel, error)
 }
 
-type Service struct {
-	repository Repository
+type RabbitMQ2 interface {
+	//Receive(hotelNew hotels.HotelNew) error
+	ConsumeCola()
 }
 
-func NewService(repository Repository) Service {
+type Service struct {
+	repository Repository
+	rabbitRepo RabbitMQ2
+}
+
+func NewService(repository Repository, rabbitRepo RabbitMQ2) Service {
 	return Service{
 		repository: repository,
+		rabbitRepo: rabbitRepo,
 	}
 }
 
 func (service Service) Search(ctx context.Context, query string, offset int, limit int) ([]domain.Hotel, error) {
+	//prueba de conexion ue llega mensaje
+	log.Println("Connecion correcta")
+	service.rabbitRepo.ConsumeCola()
+
 	hotels, err := service.repository.Search(ctx, query, offset, limit)
 	if err != nil {
 		return nil, fmt.Errorf("error searching hotelsDAO: %s", err.Error())
