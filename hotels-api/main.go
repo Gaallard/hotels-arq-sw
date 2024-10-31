@@ -32,7 +32,7 @@ func main() {
 	PortR := "5672"
 	UsernameR := "guest"
 	PasswordR := "guest"
-	QueueR := "hoteUCC"
+	QueueR := "hotelUCC"
 
 	// Dependencies
 	rabbitRpo := hotelsRepository.NewPublisher(UsernameR, PasswordR, HostR, PortR, QueueR)

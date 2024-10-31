@@ -3,21 +3,20 @@ package hotels
 import (
 	"context"
 	"fmt"
+
 	"hotels-api/dao/hotels"
 	hotelsDAO "hotels-api/dao/hotels"
 	hotelsDomain "hotels-api/domain/hotels"
-
-	"go.mongodb.org/mongo-driver/bson/primitive"
 )
 
 type Repository interface {
-	GetHotelByID(ctx context.Context, id primitive.ObjectID) (hotels.Hotel, error)
-	InsertHotel(ctx context.Context, hotel hotels.Hotel) (primitive.ObjectID, error)
-	UpdateHotel(ctx context.Context, id primitive.ObjectID, hotel hotels.Hotel) (hotels.Hotel, error)
+	GetHotelByID(ctx context.Context, id string) (hotels.Hotel, error)
+	InsertHotel(ctx context.Context, hotel hotels.Hotel) (string, error)
+	UpdateHotel(ctx context.Context, id string, hotel hotels.Hotel) (hotels.Hotel, error)
 }
 
 type RabbitMQ interface {
-	Publish(id primitive.ObjectID)
+	Publish(hotelNew hotelsDomain.Hotel) error
 }
 
 type Service struct {
@@ -34,7 +33,7 @@ func NewService(mainRepository Repository, cacheRepository Repository, rabbitRep
 	}
 }
 
-func (service Service) GetHotelByID(ctx context.Context, id primitive.ObjectID) (hotelsDomain.Hotel, error) {
+func (service Service) GetHotelByID(ctx context.Context, id string) (hotelsDomain.Hotel, error) {
 	hotelDAO, err := service.cacheRepository.GetHotelByID(ctx, id)
 	if err != nil {
 		// Get hotel from main repository
@@ -43,10 +42,12 @@ func (service Service) GetHotelByID(ctx context.Context, id primitive.ObjectID) 
 			return hotelsDomain.Hotel{}, fmt.Errorf("error getting hotel from repository: %v", err)
 		}
 
-		// TODO: service.cacheRepository.CreateHotel
+		if _, err := service.cacheRepository.InsertHotel(ctx, hotelDAO); err != nil {
+			return hotelsDomain.Hotel{}, fmt.Errorf("error creating hotel in cache: %w", err)
+		}
 	}
 	// prueba que envia mensaje, cambiar dsp en funciones utiles
-	service.rabbitRpo.Publish(id)
+	//service.rabbitRpo.Publish(id)
 	// Convert DAO to DTO
 	return hotelsDomain.Hotel{
 		ID:              hotelDAO.ID,
@@ -62,10 +63,9 @@ func (service Service) GetHotelByID(ctx context.Context, id primitive.ObjectID) 
 	}, nil
 }
 
-func (service Service) InsertHotel(ctx context.Context, hotel hotelsDomain.Hotel) (primitive.ObjectID, error) {
+func (service Service) InsertHotel(ctx context.Context, hotel hotelsDomain.Hotel) (string, error) {
 
 	hotelDAO := hotelsDAO.Hotel{
-		// IdMongo:         hotel.IdMongo,
 		Name:            hotel.Name,
 		Address:         hotel.Address,
 		City:            hotel.City,
@@ -76,23 +76,32 @@ func (service Service) InsertHotel(ctx context.Context, hotel hotelsDomain.Hotel
 		Available_rooms: hotel.Available_rooms,
 	}
 
-	_, err := service.mainRepository.InsertHotel(ctx, hotelDAO)
+	id, err := service.mainRepository.InsertHotel(ctx, hotelDAO)
 	if err != nil {
-		return primitive.NilObjectID, fmt.Errorf("Error inserting hotel into main repository: %v", err)
+		return " ", fmt.Errorf("Error inserting hotel into main repository: %v", err)
 	}
 
+	hotelDAO.IdMongo = id
 	_, err = service.cacheRepository.InsertHotel(ctx, hotelDAO)
 	if err != nil {
-		return primitive.NilObjectID, fmt.Errorf("Error inserting hotel into cache: %v", err)
+		return " ", fmt.Errorf("Error inserting hotel into cache: %v", err)
 	}
-	//service.rabbitRpo.Publish(primitive.NewObjectID())
-	return primitive.NewObjectID(), nil
+
+	/*
+		if err := service.rabbitRpo.Publish(hotelsDomain.HotelNew{
+			Operation: "CREATE",
+			HotelID:   id,
+		}); err != nil {
+			return "", fmt.Errorf("error publishing hotel new: %w", err)
+		}*/
+
+	return id, nil
 }
 
-func (service Service) UpdateHotel(ctx context.Context, id primitive.ObjectID, hotel hotelsDomain.Hotel) (hotelsDomain.Hotel, error) {
+func (service Service) UpdateHotel(ctx context.Context, id string, hotel hotelsDomain.Hotel) (hotelsDomain.Hotel, error) {
 
 	hotelDAO := hotelsDAO.Hotel{
-		// IdMongo:         hotel.IdMongo,
+		IdMongo:         hotel.IdMongo,
 		Name:            hotel.Name,
 		Address:         hotel.Address,
 		City:            hotel.City,
@@ -105,11 +114,22 @@ func (service Service) UpdateHotel(ctx context.Context, id primitive.ObjectID, h
 
 	newHotelDAO, err := service.cacheRepository.UpdateHotel(ctx, id, hotelDAO)
 	if err != nil {
-		newHotelDAO, err = service.mainRepository.UpdateHotel(ctx, id, hotelDAO)
-		if err != nil {
-			return hotelsDomain.Hotel{}, fmt.Errorf("error getting hotel from repository: %v", err)
-		}
+		return hotelsDomain.Hotel{}, fmt.Errorf("error updating hotel in cache: %w", err)
 	}
+
+	newHotelDAO, err = service.mainRepository.UpdateHotel(ctx, id, hotelDAO)
+	if err != nil {
+		return hotelsDomain.Hotel{}, fmt.Errorf("error updating hotel in main repository: %w", err)
+	}
+
+	// Publish an event for the update operation
+	/*
+		if err := service.rabbitRpo.Publish(hotelsDomain.HotelNew{
+			Operation: "UPDATE",
+			HotelID:   id,
+		}); err != nil {
+			return hotelsDomain.Hotel{}, fmt.Errorf("error publishing hotel update: %w", err)
+		}*/
 
 	return hotelsDomain.Hotel{
 		ID:              newHotelDAO.ID,

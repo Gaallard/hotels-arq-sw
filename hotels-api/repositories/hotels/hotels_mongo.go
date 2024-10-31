@@ -54,9 +54,13 @@ func NewMongo(config MongoConfig) Mongo {
 	}
 }
 
-func (repository Mongo) GetHotelByID(ctx context.Context, id primitive.ObjectID) (hotelsDAO.Hotel, error) {
+func (repository Mongo) GetHotelByID(ctx context.Context, id string) (hotelsDAO.Hotel, error) {
 	// Get from MongoDB
-	result := repository.client.Database(repository.database).Collection(repository.collection).FindOne(ctx, bson.M{"_id": id})
+	objectID, err := primitive.ObjectIDFromHex(id)
+	if err != nil {
+		return hotelsDAO.Hotel{}, fmt.Errorf("error converting id to mongo ID: %w", err)
+	}
+	result := repository.client.Database(repository.database).Collection(repository.collection).FindOne(ctx, bson.M{"_id": objectID})
 	if result.Err() != nil {
 
 		return hotelsDAO.Hotel{}, fmt.Errorf("error finding document: %w", result.Err())
@@ -70,27 +74,69 @@ func (repository Mongo) GetHotelByID(ctx context.Context, id primitive.ObjectID)
 	return hotelDAO, nil
 }
 
-func (repository Mongo) InsertHotel(ctx context.Context, hotel hotelsDAO.Hotel) (primitive.ObjectID, error) {
+func (repository Mongo) InsertHotel(ctx context.Context, hotel hotelsDAO.Hotel) (string, error) {
 	result, err := repository.client.Database(repository.database).Collection(repository.collection).InsertOne(ctx, hotel)
 	if err != nil {
-		return primitive.NilObjectID, fmt.Errorf("Error inserting new hotel: %w", err)
+		return " ", fmt.Errorf("Error inserting new hotel: %w", err)
 	}
 
-	insertedId := result.InsertedID.(primitive.ObjectID)
-
-	fmt.Sprintf("Inserted hotel with ID: %s\n", insertedId)
-	return hotel.IdMongo, nil
+	objectID, ok := result.InsertedID.(primitive.ObjectID)
+	if !ok {
+		return "", fmt.Errorf("Error converting id to string")
+	}
+	fmt.Sprintf("Inserted hotel with ID: %s\n", objectID.Hex())
+	return objectID.Hex(), nil
 }
 
-func (repository Mongo) UpdateHotel(ctx context.Context, id primitive.ObjectID, hotel hotelsDAO.Hotel) (hotelsDAO.Hotel, error) {
-	result := repository.client.Database(repository.database).Collection(repository.collection).FindOneAndUpdate(ctx, bson.M{"_id": id}, bson.M{"$set": hotel})
-	if result.Err() != nil {
-		return hotelsDAO.Hotel{}, fmt.Errorf("Error finding hotel: %w", result.Err())
+func (repository Mongo) UpdateHotel(ctx context.Context, id string, hotel hotelsDAO.Hotel) (hotelsDAO.Hotel, error) {
+
+	objectID, err := primitive.ObjectIDFromHex(id)
+	if err != nil {
+		return hotelsDAO.Hotel{}, fmt.Errorf("error converting id to mongo ID: %w", err)
 	}
 
-	var hotelDAO hotelsDAO.Hotel
-	if err := result.Decode(&hotelDAO); err != nil {
-		return hotelsDAO.Hotel{}, fmt.Errorf("error decoding result: %w", err)
+	// Create an update document
+	update := bson.M{}
+
+	// Only set the fields that are not empty or their default value
+	if hotel.Name != "" {
+		update["name"] = hotel.Name
 	}
-	return hotelDAO, nil
+	if hotel.Address != "" {
+		update["address"] = hotel.Address
+	}
+	if hotel.City != "" {
+		update["city"] = hotel.City
+	}
+	if hotel.State != "" {
+		update["state"] = hotel.State
+	}
+	if hotel.Rating != 0 { // Assuming 0 is the default for Rating
+		update["rating"] = hotel.Rating
+	}
+	if len(hotel.Amenities) > 0 { // Assuming empty slice is the default for Amenities
+		update["amenities"] = hotel.Amenities
+	}
+	if hotel.Price != 0 { // Assuming 0 is the default for price
+		update["price"] = hotel.Price
+	}
+	if hotel.Available_rooms != 0 { // Assuming 0 is the default for available rooms
+		update["available rooms"] = hotel.Available_rooms
+	}
+
+	// Update the document in MongoDB
+	if len(update) == 0 {
+		return hotelsDAO.Hotel{}, fmt.Errorf("no fields to update for hotel ID %s", hotel.ID)
+	}
+
+	filter := bson.M{"_id": objectID}
+	result, err := repository.client.Database(repository.database).Collection(repository.collection).UpdateOne(ctx, filter, bson.M{"$set": update})
+	if err != nil {
+		return hotelsDAO.Hotel{}, fmt.Errorf("error updating document: %w", err)
+	}
+	if result.MatchedCount == 0 {
+		return hotelsDAO.Hotel{}, fmt.Errorf("no document found with ID %s", hotel.ID)
+	}
+
+	return hotelsDAO.Hotel{}, nil
 }

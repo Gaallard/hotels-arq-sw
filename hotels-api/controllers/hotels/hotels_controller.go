@@ -7,15 +7,13 @@ import (
 	"net/http"
 	"strings"
 
-	"go.mongodb.org/mongo-driver/bson/primitive"
-
 	"github.com/gin-gonic/gin"
 )
 
 type Service interface {
-	GetHotelByID(ctx context.Context, id primitive.ObjectID) (hotelsDomain.Hotel, error)
-	InsertHotel(ctx context.Context, hotel hotelsDomain.Hotel) (primitive.ObjectID, error)
-	UpdateHotel(ctx context.Context, id primitive.ObjectID, hotel hotelsDomain.Hotel) (hotelsDomain.Hotel, error)
+	GetHotelByID(ctx context.Context, id string) (hotelsDomain.Hotel, error)
+	InsertHotel(ctx context.Context, hotel hotelsDomain.Hotel) (string, error)
+	UpdateHotel(ctx context.Context, id string, hotel hotelsDomain.Hotel) (hotelsDomain.Hotel, error)
 }
 
 type Controller struct {
@@ -29,14 +27,7 @@ func NewController(service Service) Controller {
 }
 
 func (controller Controller) GetHotelByID(ctx *gin.Context) {
-	idParam := strings.TrimSpace(ctx.Param("_id"))
-	objectID, err := primitive.ObjectIDFromHex(idParam)
-	if err != nil {
-		ctx.JSON(http.StatusBadRequest, gin.H{
-			"error": fmt.Sprintf("invalid id: %s", idParam),
-		})
-		return
-	}
+	objectID := strings.TrimSpace(ctx.Param("_id"))
 
 	hotel, err := controller.service.GetHotelByID(ctx.Request.Context(), objectID)
 	if err != nil {
@@ -60,7 +51,6 @@ func (controller Controller) InsertHotel(ctx *gin.Context) {
 	}
 
 	result, err := controller.service.InsertHotel(ctx.Request.Context(), hotel)
-
 	if err != nil {
 		ctx.JSON(http.StatusInternalServerError, gin.H{
 			"error": fmt.Sprintf("error creating hotel: %v", err),
@@ -68,27 +58,19 @@ func (controller Controller) InsertHotel(ctx *gin.Context) {
 		return
 	}
 
-	fmt.Printf("id mongo hotel: ", result.Hex())
+	fmt.Printf("id mongo hotel: ", result)
 
-	ctx.JSON(http.StatusOK, gin.H{
-		"message": "hotel created successfully",
-		"hotelID": primitive.NewObjectID(),
+	ctx.JSON(http.StatusCreated, gin.H{
+		"message":  "hotel created successfully",
+		"id mongo": result,
 	})
 }
 
 func (controller Controller) UpdateHotel(ctx *gin.Context) {
 
-	idParam := strings.TrimSpace(ctx.Param("_id"))
-	objectID, err := primitive.ObjectIDFromHex(idParam)
-	if err != nil {
-		ctx.JSON(http.StatusBadRequest, gin.H{
-			"error": fmt.Sprintf("invalid id: %s", idParam),
-		})
-		return
-	}
+	objectID := strings.TrimSpace(ctx.Param("_id"))
 
 	var hotelDomain hotelsDomain.Hotel
-
 	if err := ctx.ShouldBindJSON(&hotelDomain); err != nil {
 		ctx.JSON(http.StatusBadRequest, gin.H{
 			"error": fmt.Sprintf("error passing hotel: %s", err),
@@ -99,7 +81,7 @@ func (controller Controller) UpdateHotel(ctx *gin.Context) {
 	hotel, err := controller.service.UpdateHotel(ctx.Request.Context(), objectID, hotelDomain)
 	if err != nil {
 		ctx.JSON(http.StatusInternalServerError, gin.H{
-			"error": fmt.Sprintf("error updating hotel: %v", err),
+			"error": fmt.Sprintf("error updating hotel: %v", err.Error()),
 		})
 		return
 	}
@@ -109,5 +91,6 @@ func (controller Controller) UpdateHotel(ctx *gin.Context) {
 	ctx.JSON(http.StatusOK, gin.H{
 		"message": "hotel updated successfully",
 		"hotel":   hotel,
+		"id":      hotel.IdMongo,
 	})
 }

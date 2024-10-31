@@ -2,41 +2,61 @@ package hotels
 
 import (
 	"context"
+	"fmt"
 	hotelsDAO "hotels-api/dao/hotels"
+
+	"github.com/google/uuid"
 )
 
 type Mock struct {
-	docs map[int64]hotelsDAO.Hotel
+	docs map[string]hotelsDAO.Hotel
 }
 
 func NewMock() Mock {
 	return Mock{
-		docs: map[int64]hotelsDAO.Hotel{
-			1: {
-				ID:      1,
-				Name:    "Holiday Inn",
-				Address: "Mock Address",
-				City:    "Mock City",
-				State:   "Mock State",
-				Rating:  5,
-				Amenities: []string{
-					"Swimming Pool",
-					"Free Wi-Fi",
-				},
-			},
-		},
+		docs: make(map[string]hotelsDAO.Hotel),
 	}
 }
 
-func (repository Mock) GetHotelByID(ctx context.Context, id int64) (hotelsDAO.Hotel, error) {
+func (repository Mock) GetHotelByID(ctx context.Context, id string) (hotelsDAO.Hotel, error) {
 	return repository.docs[id], nil
 }
 
-func (repository Mock) InsertHotel(ctx context.Context, hotel hotelsDAO.Hotel) error {
-	repository.docs[hotel.ID] = hotel
-	return nil
+func (repository Mock) Create(ctx context.Context, hotel hotelsDAO.Hotel) (string, error) {
+	id := uuid.New().String()
+	hotel.IdMongo = uuid.New().String()
+	repository.docs[id] = hotel
+	return id, nil
 }
 
-func (repository Mock) DeleteHotel(ctx context.Context, id int64) error {
-	return nil
+func (repository Mock) Update(ctx context.Context, id string, hotel hotelsDAO.Hotel) (hotelsDAO.Hotel, error) {
+	// Check if the hotel exists in the mock storage
+	currentHotel, exists := repository.docs[hotel.IdMongo]
+	if !exists {
+		return repository.docs[id], fmt.Errorf("hotel with ID %s not found", hotel.ID)
+	}
+
+	// Update only the fields that are non-zero or non-empty
+	if hotel.Name != "" {
+		currentHotel.Name = hotel.Name
+	}
+	if hotel.Address != "" {
+		currentHotel.Address = hotel.Address
+	}
+	if hotel.City != "" {
+		currentHotel.City = hotel.City
+	}
+	if hotel.State != "" {
+		currentHotel.State = hotel.State
+	}
+	if hotel.Rating != 0 {
+		currentHotel.Rating = hotel.Rating
+	}
+	if len(hotel.Amenities) > 0 {
+		currentHotel.Amenities = hotel.Amenities
+	}
+
+	// Save the updated hotel back to the mock storage
+	repository.docs[hotel.IdMongo] = currentHotel
+	return repository.docs[id], nil
 }
