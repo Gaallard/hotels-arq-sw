@@ -84,7 +84,7 @@ func (repository Mongo) InsertHotel(ctx context.Context, hotel hotelsDAO.Hotel) 
 	if !ok {
 		return "", fmt.Errorf("Error converting id to string")
 	}
-	fmt.Sprintf("Inserted hotel with ID: %s\n", objectID.Hex())
+	fmt.Printf("Inserted hotel with ID: %s\n", objectID.Hex())
 	return objectID.Hex(), nil
 }
 

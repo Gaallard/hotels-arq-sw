@@ -4,8 +4,9 @@ import (
 	"fmt"
 	"log"
 
+	hotelsDomain "hotels-api/domain/hotels"
+
 	"github.com/streadway/amqp"
-	"go.mongodb.org/mongo-driver/bson/primitive"
 )
 
 type Publisher struct {
@@ -44,13 +45,18 @@ func NewPublisher(user string, password string, host string, port string, queueN
 	}
 }
 
-func (p Publisher) Publish(id primitive.ObjectID) {
-	_ = p.Channel.Publish(
+func (p Publisher) Publish(hotelNew hotelsDomain.HotelNew) error {
+	message := fmt.Sprintf("{_id:%s}", hotelNew.HotelID)
+	err := p.Channel.Publish(
 		"",
 		p.Queue.Name,
 		false,
 		false,
 		amqp.Publishing{
-			Body: []byte(fmt.Sprintf("{_id:%d}", 89898)),
+			Body: []byte(message),
 		})
+	if err != nil {
+		return fmt.Errorf("error publishing message to RabbitMQ: %w", err)
+	}
+	return nil
 }

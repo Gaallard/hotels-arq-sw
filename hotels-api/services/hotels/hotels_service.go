@@ -16,7 +16,7 @@ type Repository interface {
 }
 
 type RabbitMQ interface {
-	Publish(hotelNew hotelsDomain.Hotel) error
+	Publish(hotelNew hotelsDomain.HotelNew) error
 }
 
 type Service struct {
@@ -87,13 +87,12 @@ func (service Service) InsertHotel(ctx context.Context, hotel hotelsDomain.Hotel
 		return " ", fmt.Errorf("Error inserting hotel into cache: %v", err)
 	}
 
-	/*
-		if err := service.rabbitRpo.Publish(hotelsDomain.HotelNew{
-			Operation: "CREATE",
-			HotelID:   id,
-		}); err != nil {
-			return "", fmt.Errorf("error publishing hotel new: %w", err)
-		}*/
+	if err := service.rabbitRpo.Publish(hotelsDomain.HotelNew{
+		Operation: "CREATE",
+		HotelID:   id,
+	}); err != nil {
+		return "", fmt.Errorf("error publishing hotel new: %w", err)
+	}
 
 	return id, nil
 }
@@ -123,13 +122,13 @@ func (service Service) UpdateHotel(ctx context.Context, id string, hotel hotelsD
 	}
 
 	// Publish an event for the update operation
-	/*
-		if err := service.rabbitRpo.Publish(hotelsDomain.HotelNew{
-			Operation: "UPDATE",
-			HotelID:   id,
-		}); err != nil {
-			return hotelsDomain.Hotel{}, fmt.Errorf("error publishing hotel update: %w", err)
-		}*/
+
+	if err := service.rabbitRpo.Publish(hotelsDomain.HotelNew{
+		Operation: "UPDATE",
+		HotelID:   id,
+	}); err != nil {
+		return hotelsDomain.Hotel{}, fmt.Errorf("error publishing hotel update: %w", err)
+	}
 
 	return hotelsDomain.Hotel{
 		ID:              newHotelDAO.ID,

@@ -57,7 +57,7 @@ func (repo Cache) InsertHotel(ctx context.Context, hotel hotelsDAO.Hotel) (strin
 	return hotel.IdMongo, nil
 }
 
-func (repository Cache) Update(ctx context.Context, id string, hotel hotelsDAO.Hotel) (hotelsDAO.Hotel, error) {
+func (repository Cache) UpdateHotel(ctx context.Context, id string, hotel hotelsDAO.Hotel) (hotelsDAO.Hotel, error) {
 	key := fmt.Sprintf(keyFormat, hotel.ID)
 
 	// Retrieve the current hotel data from the cache
