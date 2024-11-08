@@ -1,10 +1,10 @@
 package hotels
 
 import (
+	"encoding/json"
 	"fmt"
-	"log"
-
 	hotelsDomain "hotels-api/domain/hotels"
+	"log"
 
 	"github.com/streadway/amqp"
 )
@@ -46,17 +46,20 @@ func NewPublisher(user string, password string, host string, port string, queueN
 }
 
 func (p Publisher) Publish(hotelNew hotelsDomain.HotelNew) error {
-	message := fmt.Sprintf("{_id:%s}", hotelNew.HotelID)
-	err := p.Channel.Publish(
+	bytes, err := json.Marshal(hotelNew)
+	if err != nil {
+		return fmt.Errorf("error marshaling Rabbit hotelNew: %w", err)
+	}
+	if err := p.Channel.Publish(
 		"",
 		p.Queue.Name,
 		false,
 		false,
 		amqp.Publishing{
-			Body: []byte(message),
-		})
-	if err != nil {
-		return fmt.Errorf("error publishing message to RabbitMQ: %w", err)
+			ContentType: "application/json",
+			Body:        bytes,
+		}); err != nil {
+		return fmt.Errorf("error publishing to Rabbit: %w", err)
 	}
 	return nil
 }

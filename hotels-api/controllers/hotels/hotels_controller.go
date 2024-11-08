@@ -13,7 +13,7 @@ import (
 type Service interface {
 	GetHotelByID(ctx context.Context, id string) (hotelsDomain.Hotel, error)
 	InsertHotel(ctx context.Context, hotel hotelsDomain.Hotel) (string, error)
-	UpdateHotel(ctx context.Context, id string, hotel hotelsDomain.Hotel) (hotelsDomain.Hotel, error)
+	UpdateHotel(ctx context.Context, id string, hotel hotelsDomain.Hotel) error
 }
 
 type Controller struct {
@@ -78,7 +78,7 @@ func (controller Controller) UpdateHotel(ctx *gin.Context) {
 		return
 	}
 
-	hotel, err := controller.service.UpdateHotel(ctx.Request.Context(), objectID, hotelDomain)
+	err := controller.service.UpdateHotel(ctx.Request.Context(), objectID, hotelDomain)
 	if err != nil {
 		ctx.JSON(http.StatusInternalServerError, gin.H{
 			"error": fmt.Sprintf("error updating hotel: %v", err.Error()),
@@ -86,11 +86,8 @@ func (controller Controller) UpdateHotel(ctx *gin.Context) {
 		return
 	}
 
-	fmt.Printf("hotel es: \n", hotel)
-
 	ctx.JSON(http.StatusOK, gin.H{
 		"message": "hotel updated successfully",
-		"hotel":   hotel,
-		"id":      hotel.IdMongo,
+		"id":      objectID,
 	})
 }

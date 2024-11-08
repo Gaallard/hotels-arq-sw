@@ -57,22 +57,22 @@ func (repo Cache) InsertHotel(ctx context.Context, hotel hotelsDAO.Hotel) (strin
 	return hotel.IdMongo, nil
 }
 
-func (repository Cache) UpdateHotel(ctx context.Context, id string, hotel hotelsDAO.Hotel) (hotelsDAO.Hotel, error) {
+func (repository Cache) UpdateHotel(ctx context.Context, id string, hotel hotelsDAO.Hotel) error {
 	key := fmt.Sprintf(keyFormat, hotel.ID)
 
 	// Retrieve the current hotel data from the cache
 	item := repository.client.Get(key)
 	if item == nil {
-		return hotelsDAO.Hotel{}, fmt.Errorf("hotel with ID %s not found in cache", hotel.ID)
+		return fmt.Errorf("hotel with ID %s not found in cache", hotel.ID)
 	}
 	if item.Expired() {
-		return hotelsDAO.Hotel{}, fmt.Errorf("item with key %s is expired", key)
+		return fmt.Errorf("item with key %s is expired", key)
 	}
 
 	// Get the current hotel data
 	currentHotel, ok := item.Value().(hotelsDAO.Hotel)
 	if !ok {
-		return hotelsDAO.Hotel{}, fmt.Errorf("error converting item with key %s", key)
+		return fmt.Errorf("error converting item with key %s", key)
 	}
 
 	// Update only the fields that are non-zero or non-empty
@@ -104,5 +104,5 @@ func (repository Cache) UpdateHotel(ctx context.Context, id string, hotel hotels
 	// Update the cache with the new hotel data and reset the expiration timer
 	repository.client.Set(key, currentHotel, repository.duration)
 
-	return hotelsDAO.Hotel{}, nil
+	return nil
 }

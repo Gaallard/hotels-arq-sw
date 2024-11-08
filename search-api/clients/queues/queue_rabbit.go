@@ -1,6 +1,7 @@
 package queues
 
 import (
+	"encoding/json"
 	"fmt"
 
 	// "hotels-api/domain/hotels"
@@ -43,23 +44,33 @@ func NewRabbit(config RabbitConfig) Rabbit {
 
 // prueba para ver si llega mensaje
 
-func (p Rabbit) ConsumeCola() {
-	msgs, err := p.channel.Consume(
-		p.queue.Name,
+func (p Rabbit) StartConsume(handler func(hotels.HotelNew)) error {
+	messages, err := queue.channel.Consume(
+		queue.queue.Name,
 		"",
-		true,
+		true, // Auto-acknowledge messages
 		false,
 		false,
-		true,
+		false,
 		nil,
 	)
-
 	if err != nil {
-		log.Printf("Error al recibir mensages")
+		return fmt.Errorf("error registering consumer: %w", err)
 	}
 
-	d := <-msgs
-	log.Printf("Mensage recibido: %s", d.Body)
+	go func() {
+		for msg := range messages {
+			var hotelUpdate hotels.HotelNew
+			if err := json.Unmarshal(msg.Body, &hotelUpdate); err != nil {
+				log.Printf("error unmarshaling message: %v", err)
+				continue
+			}
+
+			handler(hotelUpdate)
+		}
+	}()
+
+	return nil
 
 }
 

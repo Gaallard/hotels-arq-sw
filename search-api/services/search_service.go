@@ -3,61 +3,57 @@ package search
 import (
 	"context"
 	"fmt"
-	"log"
-	"search-api/dao"
-	"search-api/domain"
+	hotelsDAO "search-api/dao/hotels"
+	hotelsDomain "search-api/domain/hotels"
 )
 
 type Repository interface {
-	Search(ctx context.Context, query string, offset int, limit int) ([]dao.Hotel, error)
+	Index(ctx context.Context, hotel hotelsDAO.Hotel) (string, error)
+	Update(ctx context.Context, hotel hotelsDAO.Hotel) error
+	Delete(ctx context.Context, id string) error
+	Search(ctx context.Context, query string, limit int, offset int) ([]hotelsDAO.Hotel, error) // Updated signature
 }
 
-type RabbitMQ2 interface {
-	//Receive(hotelNew hotels.HotelNew) error
-	ConsumeCola()
+type ExternalRepository interface {
+	GetHotelByID(ctx context.Context, id string) (hotelsDomain.Hotel, error)
 }
 
 type Service struct {
 	repository Repository
-	rabbitRepo RabbitMQ2
+	hotelsAPI  ExternalRepository
 }
 
-func NewService(repository Repository, rabbitRepo RabbitMQ2) Service {
+func NewService(repository Repository, hotelsAPI ExternalRepository) Service {
 	return Service{
 		repository: repository,
-		rabbitRepo: rabbitRepo,
+		hotelsAPI:  hotelsAPI,
 	}
 }
 
-func (service Service) Search(ctx context.Context, query string, offset int, limit int) ([]domain.Hotel, error) {
-	//prueba de conexion ue llega mensaje
-	log.Println("Connecion correcta")
-	service.rabbitRepo.ConsumeCola()
-
-	hotels, err := service.repository.Search(ctx, query, offset, limit)
+func (service Service) Search(ctx context.Context, query string, offset int, limit int) ([]hotelsDomain.Hotel, error) {
+	// Call the repository's Search method
+	hotelsDAOList, err := service.repository.Search(ctx, query, limit, offset)
 	if err != nil {
-		return nil, fmt.Errorf("error searching hotelsDAO: %s", err.Error())
+		return nil, fmt.Errorf("error searching hotels: %w", err)
 	}
 
-	result := make([]domain.Hotel, 0)
-	for _, hotel := range hotels {
-		result = append(result, domain.Hotel{
-			IdMongo:         hotel.IdMongo,
-			Name:            hotel.Name,
-			Address:         hotel.Address,
-			City:            hotel.City,
-			State:           hotel.State,
-			Rating:          hotel.Rating,
-			Amenities:       hotel.Amenities,
-			Price:           hotel.Price,
-			Available_rooms: hotel.Available_rooms,
+	// Convert the dao layer hotels to domain layer hotels
+	hotelsDomainList := make([]hotelsDomain.Hotel, 0)
+	for _, hotel := range hotelsDAOList {
+		hotelsDomainList = append(hotelsDomainList, hotelsDomain.Hotel{
+			ID:        hotel.ID,
+			Name:      hotel.Name,
+			Address:   hotel.Address,
+			City:      hotel.City,
+			State:     hotel.State,
+			Rating:    hotel.Rating,
+			Amenities: hotel.Amenities,
 		})
 	}
 
-	return result, nil
+	return hotelsDomainList, nil
 }
 
-/*
 func (service Service) HandleHotelNew(hotelNew hotelsDomain.HotelNew) {
 	switch hotelNew.Operation {
 	case "CREATE", "UPDATE":
@@ -105,4 +101,3 @@ func (service Service) HandleHotelNew(hotelNew hotelsDomain.HotelNew) {
 		fmt.Printf("Unknown operation: %s\n", hotelNew.Operation)
 	}
 }
-*/

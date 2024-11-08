@@ -12,7 +12,7 @@ import (
 type Repository interface {
 	GetHotelByID(ctx context.Context, id string) (hotels.Hotel, error)
 	InsertHotel(ctx context.Context, hotel hotels.Hotel) (string, error)
-	UpdateHotel(ctx context.Context, id string, hotel hotels.Hotel) (hotels.Hotel, error)
+	UpdateHotel(ctx context.Context, id string, hotel hotels.Hotel) error
 }
 
 type RabbitMQ interface {
@@ -66,6 +66,7 @@ func (service Service) GetHotelByID(ctx context.Context, id string) (hotelsDomai
 func (service Service) InsertHotel(ctx context.Context, hotel hotelsDomain.Hotel) (string, error) {
 
 	hotelDAO := hotelsDAO.Hotel{
+
 		Name:            hotel.Name,
 		Address:         hotel.Address,
 		City:            hotel.City,
@@ -78,13 +79,13 @@ func (service Service) InsertHotel(ctx context.Context, hotel hotelsDomain.Hotel
 
 	id, err := service.mainRepository.InsertHotel(ctx, hotelDAO)
 	if err != nil {
-		return " ", fmt.Errorf("Error inserting hotel into main repository: %v", err)
+		return "", fmt.Errorf("Error inserting hotel into main repository: %v", err)
 	}
 
 	hotelDAO.IdMongo = id
 	_, err = service.cacheRepository.InsertHotel(ctx, hotelDAO)
 	if err != nil {
-		return " ", fmt.Errorf("Error inserting hotel into cache: %v", err)
+		return "", fmt.Errorf("Error inserting hotel into cache: %v", err)
 	}
 
 	if err := service.rabbitRpo.Publish(hotelsDomain.HotelNew{
@@ -97,7 +98,7 @@ func (service Service) InsertHotel(ctx context.Context, hotel hotelsDomain.Hotel
 	return id, nil
 }
 
-func (service Service) UpdateHotel(ctx context.Context, id string, hotel hotelsDomain.Hotel) (hotelsDomain.Hotel, error) {
+func (service Service) UpdateHotel(ctx context.Context, id string, hotel hotelsDomain.Hotel) error {
 
 	hotelDAO := hotelsDAO.Hotel{
 		IdMongo:         hotel.IdMongo,
@@ -111,15 +112,20 @@ func (service Service) UpdateHotel(ctx context.Context, id string, hotel hotelsD
 		Available_rooms: hotel.Available_rooms,
 	}
 
-	newHotelDAO, err := service.cacheRepository.UpdateHotel(ctx, id, hotelDAO)
+	err := service.cacheRepository.UpdateHotel(ctx, id, hotelDAO)
 	if err != nil {
-		return hotelsDomain.Hotel{}, fmt.Errorf("error updating hotel in cache: %w", err)
+		println("No esta en cache")
+		err = service.mainRepository.UpdateHotel(ctx, id, hotelDAO)
+		if err != nil {
+			return fmt.Errorf("error updating hotel in main repository: %w", err)
+		}
+
 	}
 
-	newHotelDAO, err = service.mainRepository.UpdateHotel(ctx, id, hotelDAO)
+	/*newHotelDAO, err = service.mainRepository.UpdateHotel(ctx, id, hotelDAO)
 	if err != nil {
 		return hotelsDomain.Hotel{}, fmt.Errorf("error updating hotel in main repository: %w", err)
-	}
+	}*/
 
 	// Publish an event for the update operation
 
@@ -127,19 +133,8 @@ func (service Service) UpdateHotel(ctx context.Context, id string, hotel hotelsD
 		Operation: "UPDATE",
 		HotelID:   id,
 	}); err != nil {
-		return hotelsDomain.Hotel{}, fmt.Errorf("error publishing hotel update: %w", err)
+		return fmt.Errorf("error publishing hotel update: %w", err)
 	}
 
-	return hotelsDomain.Hotel{
-		ID:              newHotelDAO.ID,
-		IdMongo:         newHotelDAO.IdMongo,
-		Name:            newHotelDAO.Name,
-		Address:         newHotelDAO.Address,
-		City:            newHotelDAO.City,
-		State:           newHotelDAO.State,
-		Rating:          newHotelDAO.Rating,
-		Amenities:       newHotelDAO.Amenities,
-		Price:           newHotelDAO.Price,
-		Available_rooms: newHotelDAO.Available_rooms,
-	}, nil
+	return nil
 }

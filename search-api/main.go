@@ -2,9 +2,9 @@ package main
 
 import (
 	"log"
-	clients "search-api/clients/queues"
+	"search-api/clients/queues"
 	controllers "search-api/controller"
-	search "search-api/respositories"
+	repositories "search-api/respositories"
 	services "search-api/services"
 
 	"github.com/gin-gonic/gin"
@@ -12,37 +12,42 @@ import (
 
 func main() {
 	// Solr
-	solrConfig := search.SolrConfig{
-		BaseURL:    "",
-		Collection: "hotels",
-	}
+	solrRepo := repositories.NewSolr(repositories.SolrConfig{
+		Host:       "solr",   // Solr host
+		Port:       "8983",   // Solr port
+		Collection: "hotels", // Collection name
+	})
 
-	rabbit := clients.RabbitConfig{
-		Host:      "localhost",
+	// Rabbit
+	eventsQueue := queues.NewRabbit(queues.RabbitConfig{
+		Host:      "rabbitmq",
 		Port:      "5672",
-		Username:  "guest",
-		Password:  "guest",
-		QueueName: "hoteUCC",
-	}
+		Username:  "root",
+		Password:  "root",
+		QueueName: "hotels-news",
+	})
 
-	rabbitRpo := clients.NewRabbit(rabbit)
-	solrRepo := search.NewSolr(solrConfig)
+	// Hotels API
+	hotelsAPI := repositories.NewHTTP(repositories.HTTPConfig{
+		Host: "hotels-api",
+		Port: "8081",
+	})
 
-	// Services, le di el rabbit al service
-	service := services.NewService(solrRepo, rabbitRpo)
+	// Services
+	service := services.NewService(solrRepo, hotelsAPI)
 
-	// Handlers
+	// Controllers
 	controller := controllers.NewController(service)
+
+	// Launch rabbit consumer
+	if err := eventsQueue.StartConsumer(service.HandleHotelNew); err != nil {
+		log.Fatalf("Error running consumer: %v", err)
+	}
 
 	// Create router
 	router := gin.Default()
-
-	// URL mappings
-	// /hotels/search?q=sheraton&limit=10&offset=0
-	router.GET("/hotels/search", controller.Search)
-
-	// Run application
-	if err := router.Run(":8081"); err != nil {
-		log.Panicf("Error running application: %v", err)
+	router.GET("/search", controller.Search)
+	if err := router.Run(":8082"); err != nil {
+		log.Fatalf("Error running application: %v", err)
 	}
 }

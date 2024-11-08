@@ -88,11 +88,11 @@ func (repository Mongo) InsertHotel(ctx context.Context, hotel hotelsDAO.Hotel) 
 	return objectID.Hex(), nil
 }
 
-func (repository Mongo) UpdateHotel(ctx context.Context, id string, hotel hotelsDAO.Hotel) (hotelsDAO.Hotel, error) {
+func (repository Mongo) UpdateHotel(ctx context.Context, id string, hotel hotelsDAO.Hotel) error {
 
 	objectID, err := primitive.ObjectIDFromHex(id)
 	if err != nil {
-		return hotelsDAO.Hotel{}, fmt.Errorf("error converting id to mongo ID: %w", err)
+		return fmt.Errorf("error converting id to mongo ID: %w", err)
 	}
 
 	// Create an update document
@@ -126,17 +126,17 @@ func (repository Mongo) UpdateHotel(ctx context.Context, id string, hotel hotels
 
 	// Update the document in MongoDB
 	if len(update) == 0 {
-		return hotelsDAO.Hotel{}, fmt.Errorf("no fields to update for hotel ID %s", hotel.ID)
+		return fmt.Errorf("no fields to update for hotel ID %s", hotel.ID)
 	}
 
 	filter := bson.M{"_id": objectID}
 	result, err := repository.client.Database(repository.database).Collection(repository.collection).UpdateOne(ctx, filter, bson.M{"$set": update})
 	if err != nil {
-		return hotelsDAO.Hotel{}, fmt.Errorf("error updating document: %w", err)
+		return fmt.Errorf("error updating document: %w", err)
 	}
 	if result.MatchedCount == 0 {
-		return hotelsDAO.Hotel{}, fmt.Errorf("no document found with ID %s", hotel.ID)
+		return fmt.Errorf("no document found with ID %s", hotel.ID)
 	}
 
-	return hotelsDAO.Hotel{}, nil
+	return nil
 }
