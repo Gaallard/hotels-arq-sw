@@ -66,7 +66,6 @@ func (service Service) GetHotelByID(ctx context.Context, id string) (hotelsDomai
 func (service Service) InsertHotel(ctx context.Context, hotel hotelsDomain.Hotel) (string, error) {
 
 	hotelDAO := hotelsDAO.Hotel{
-
 		Name:            hotel.Name,
 		Address:         hotel.Address,
 		City:            hotel.City,
@@ -121,11 +120,6 @@ func (service Service) UpdateHotel(ctx context.Context, id string, hotel hotelsD
 		}
 
 	}
-
-	/*newHotelDAO, err = service.mainRepository.UpdateHotel(ctx, id, hotelDAO)
-	if err != nil {
-		return hotelsDomain.Hotel{}, fmt.Errorf("error updating hotel in main repository: %w", err)
-	}*/
 
 	if err := service.rabbitRpo.Publish(hotelsDomain.HotelNew{
 		Operation: "UPDATE",

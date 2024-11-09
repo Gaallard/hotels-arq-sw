@@ -55,6 +55,12 @@ func (repository Mock) UpdateHotel(ctx context.Context, id string, hotel hotelsD
 	if len(hotel.Amenities) > 0 {
 		currentHotel.Amenities = hotel.Amenities
 	}
+	if hotel.Price != 0 {
+		currentHotel.Price = hotel.Price
+	}
+	if hotel.Available_rooms != 0 {
+		currentHotel.Available_rooms = hotel.Available_rooms
+	}
 
 	// Save the updated hotel back to the mock storage
 	repository.docs[hotel.IdMongo] = currentHotel

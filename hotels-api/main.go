@@ -19,11 +19,12 @@ func main() {
 		ItemsToPrune: 100,
 	}
 
+	//username y password de tomi: root / root
 	mongoConfig := hotelsRepository.MongoConfig{
 		Host:       "localhost",
 		Port:       "27017",
-		Username:   "frantmateos",
-		Password:   "Tomas1927",
+		Username:   "root", //fran:
+		Password:   "root", //fran:
 		Database:   "hotels",
 		Collection: "hotels",
 	}

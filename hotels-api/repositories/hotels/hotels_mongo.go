@@ -119,7 +119,7 @@ func (repository Mongo) UpdateHotel(ctx context.Context, id string, hotel hotels
 		update["price"] = hotel.Price
 	}
 	if hotel.Available_rooms != 0 {
-		update["available rooms"] = hotel.Available_rooms
+		update["available_rooms"] = hotel.Available_rooms
 	}
 
 	if len(update) == 0 {
