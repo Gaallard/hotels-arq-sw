@@ -69,13 +69,11 @@ func (repository Cache) UpdateHotel(ctx context.Context, id string, hotel hotels
 		return fmt.Errorf("item with key %s is expired", key)
 	}
 
-	// Get the current hotel data
 	currentHotel, ok := item.Value().(hotelsDAO.Hotel)
 	if !ok {
 		return fmt.Errorf("error converting item with key %s", key)
 	}
 
-	// Update only the fields that are non-zero or non-empty
 	if hotel.Name != "" {
 		currentHotel.Name = hotel.Name
 	}
@@ -101,7 +99,6 @@ func (repository Cache) UpdateHotel(ctx context.Context, id string, hotel hotels
 		currentHotel.Available_rooms = hotel.Available_rooms
 	}
 
-	// Update the cache with the new hotel data and reset the expiration timer
 	repository.client.Set(key, currentHotel, repository.duration)
 
 	return nil

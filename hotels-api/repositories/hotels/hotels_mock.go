@@ -22,14 +22,14 @@ func (repository Mock) GetHotelByID(ctx context.Context, id string) (hotelsDAO.H
 	return repository.docs[id], nil
 }
 
-func (repository Mock) Create(ctx context.Context, hotel hotelsDAO.Hotel) (string, error) {
+func (repository Mock) InsertHotel(ctx context.Context, hotel hotelsDAO.Hotel) (string, error) {
 	id := uuid.New().String()
 	hotel.IdMongo = uuid.New().String()
 	repository.docs[id] = hotel
 	return id, nil
 }
 
-func (repository Mock) Update(ctx context.Context, id string, hotel hotelsDAO.Hotel) (hotelsDAO.Hotel, error) {
+func (repository Mock) UpdateHotel(ctx context.Context, id string, hotel hotelsDAO.Hotel) (hotelsDAO.Hotel, error) {
 	// Check if the hotel exists in the mock storage
 	currentHotel, exists := repository.docs[hotel.IdMongo]
 	if !exists {

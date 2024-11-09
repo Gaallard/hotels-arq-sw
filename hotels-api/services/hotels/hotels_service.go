@@ -127,8 +127,6 @@ func (service Service) UpdateHotel(ctx context.Context, id string, hotel hotelsD
 		return hotelsDomain.Hotel{}, fmt.Errorf("error updating hotel in main repository: %w", err)
 	}*/
 
-	// Publish an event for the update operation
-
 	if err := service.rabbitRpo.Publish(hotelsDomain.HotelNew{
 		Operation: "UPDATE",
 		HotelID:   id,

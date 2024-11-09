@@ -3,10 +3,11 @@ package users
 import (
 	"context"
 	"fmt"
-	"github.com/gin-gonic/gin"
 	"net/http"
 	"search-api/domain"
 	"strconv"
+
+	"github.com/gin-gonic/gin"
 )
 
 type Service interface {

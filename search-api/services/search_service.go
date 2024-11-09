@@ -3,8 +3,8 @@ package search
 import (
 	"context"
 	"fmt"
-	hotelsDAO "search-api/dao/hotels"
-	hotelsDomain "search-api/domain/hotels"
+	hotelsDAO "search-api/dao"
+	hotelsDomain "search-api/domain"
 )
 
 type Repository interface {
@@ -41,13 +41,15 @@ func (service Service) Search(ctx context.Context, query string, offset int, lim
 	hotelsDomainList := make([]hotelsDomain.Hotel, 0)
 	for _, hotel := range hotelsDAOList {
 		hotelsDomainList = append(hotelsDomainList, hotelsDomain.Hotel{
-			ID:        hotel.ID,
-			Name:      hotel.Name,
-			Address:   hotel.Address,
-			City:      hotel.City,
-			State:     hotel.State,
-			Rating:    hotel.Rating,
-			Amenities: hotel.Amenities,
+			ID:              hotel.ID,
+			Name:            hotel.Name,
+			Address:         hotel.Address,
+			City:            hotel.City,
+			State:           hotel.State,
+			Rating:          hotel.Rating,
+			Amenities:       hotel.Amenities,
+			Price:           hotel.Price,
+			Available_rooms: hotel.Available_rooms,
 		})
 	}
 
@@ -55,6 +57,9 @@ func (service Service) Search(ctx context.Context, query string, offset int, lim
 }
 
 func (service Service) HandleHotelNew(hotelNew hotelsDomain.HotelNew) {
+	println("op: ", hotelNew.Operation)
+	println("id: ", hotelNew.HotelID)
+
 	switch hotelNew.Operation {
 	case "CREATE", "UPDATE":
 		// Fetch hotel details from the local service
@@ -65,13 +70,15 @@ func (service Service) HandleHotelNew(hotelNew hotelsDomain.HotelNew) {
 		}
 
 		hotelDAO := hotelsDAO.Hotel{
-			ID:        hotel.ID,
-			Name:      hotel.Name,
-			Address:   hotel.Address,
-			City:      hotel.City,
-			State:     hotel.State,
-			Rating:    hotel.Rating,
-			Amenities: hotel.Amenities,
+			ID:              hotel.ID,
+			Name:            hotel.Name,
+			Address:         hotel.Address,
+			City:            hotel.City,
+			State:           hotel.State,
+			Rating:          hotel.Rating,
+			Amenities:       hotel.Amenities,
+			Price:           hotel.Price,
+			Available_rooms: hotel.Available_rooms,
 		}
 
 		// Handle Index operation

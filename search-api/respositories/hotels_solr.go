@@ -1,64 +1,13 @@
 package search
 
 import (
-	"context"
-	"encoding/json"
-	"fmt"
-	hotels "search-api/dao"
-
-	"github.com/stevenferrer/solr-go"
-)
-
-type SolrConfig struct {
-	BaseURL    string
-	Collection string
-}
-
-type Solr struct {
-	Client     *solr.JSONClient
-	Collection string
-}
-
-func NewSolr(config SolrConfig) Solr {
-	return Solr{
-		Client:     solr.NewJSONClient(config.BaseURL),
-		Collection: config.Collection,
-	}
-}
-
-func (repo Solr) Search(ctx context.Context, query string, offset int, limit int) ([]hotels.Hotel, error) {
-	queryParser := solr.NewChildrenQueryParser().Query(query).BuildParser()
-	solrQuery := solr.NewQuery(queryParser).Sort("rating").Offset(offset).Limit(limit)
-	response, err := repo.Client.Query(ctx, repo.Collection, solrQuery)
-	if err != nil {
-		return nil, fmt.Errorf("error running query against Solr: %w", err)
-	}
-	if response.Error != nil {
-		return nil, fmt.Errorf("error running query against Solr: %w", response.Error)
-	}
-	bytes, err := json.Marshal(response.Response.Documents)
-	if err != nil {
-		return nil, fmt.Errorf("error matching Solr results: %w", err)
-	}
-	result := make([]hotels.Hotel, 0)
-	if err := json.Unmarshal(bytes, &result); err != nil {
-		return nil, fmt.Errorf("error unmarshaling Solr results: %w", err)
-	}
-	return result, nil
-}
-
-//-----------------CODIGO EMI--------------------
-
-/*
-package hotels
-
-import (
 	"bytes"
 	"context"
 	"encoding/json"
 	"fmt"
+	"search-api/dao"
+
 	"github.com/stevenferrer/solr-go"
-	"search-api/dao/hotels"
 )
 
 type SolrConfig struct {
@@ -85,16 +34,18 @@ func NewSolr(config SolrConfig) Solr {
 }
 
 // Index adds a new hotel document to the Solr collection
-func (searchEngine Solr) Index(ctx context.Context, hotel hotels.Hotel) (string, error) {
+func (searchEngine Solr) Index(ctx context.Context, hotel dao.Hotel) (string, error) {
 	// Prepare the document for Solr
 	doc := map[string]interface{}{
-		"id":        hotel.ID,
-		"name":      hotel.Name,
-		"address":   hotel.Address,
-		"city":      hotel.City,
-		"state":     hotel.State,
-		"rating":    hotel.Rating,
-		"amenities": hotel.Amenities,
+		"_id":             hotel.IdMongo,
+		"name":            hotel.Name,
+		"address":         hotel.Address,
+		"city":            hotel.City,
+		"state":           hotel.State,
+		"rating":          hotel.Rating,
+		"amenities":       hotel.Amenities,
+		"price":           hotel.Price,
+		"available_rooms": hotel.Available_rooms,
 	}
 
 	// Prepare the index request
@@ -122,20 +73,22 @@ func (searchEngine Solr) Index(ctx context.Context, hotel hotels.Hotel) (string,
 		return "", fmt.Errorf("error committing changes to Solr: %w", err)
 	}
 
-	return hotel.ID, nil
+	return hotel.IdMongo, nil
 }
 
 // Update modifies an existing hotel document in the Solr collection
-func (searchEngine Solr) Update(ctx context.Context, hotel hotels.Hotel) error {
+func (searchEngine Solr) Update(ctx context.Context, hotel dao.Hotel) error {
 	// Prepare the document for Solr
 	doc := map[string]interface{}{
-		"id":        hotel.ID,
-		"name":      hotel.Name,
-		"address":   hotel.Address,
-		"city":      hotel.City,
-		"state":     hotel.State,
-		"rating":    hotel.Rating,
-		"amenities": hotel.Amenities,
+		"_id":             hotel.IdMongo,
+		"name":            hotel.Name,
+		"address":         hotel.Address,
+		"city":            hotel.City,
+		"state":           hotel.State,
+		"rating":          hotel.Rating,
+		"amenities":       hotel.Amenities,
+		"price":           hotel.Price,
+		"available_rooms": hotel.Available_rooms,
 	}
 
 	// Prepare the update request
@@ -170,7 +123,7 @@ func (searchEngine Solr) Delete(ctx context.Context, id string) error {
 	// Prepare the delete request
 	docToDelete := map[string]interface{}{
 		"delete": map[string]interface{}{
-			"id": id,
+			"_id": id,
 		},
 	}
 
@@ -197,7 +150,7 @@ func (searchEngine Solr) Delete(ctx context.Context, id string) error {
 	return nil
 }
 
-func (searchEngine Solr) Search(ctx context.Context, query string, limit int, offset int) ([]hotels.Hotel, error) {
+func (searchEngine Solr) Search(ctx context.Context, query string, limit int, offset int) ([]dao.Hotel, error) {
 	// Prepare the Solr query with limit and offset
 	solrQuery := fmt.Sprintf("q=(name:%s)&rows=%d&start=%d", query, limit, offset)
 
@@ -211,7 +164,7 @@ func (searchEngine Solr) Search(ctx context.Context, query string, limit int, of
 	}
 
 	// Parse the response and extract hotel documents
-	var hotelsList []hotels.Hotel
+	var hotelsList []dao.Hotel
 	for _, doc := range resp.Response.Documents {
 		// Initialize amenities slice
 		var amenities []string
@@ -226,14 +179,16 @@ func (searchEngine Solr) Search(ctx context.Context, query string, limit int, of
 		}
 
 		// Safely extract hotel fields with type assertions
-		hotel := hotels.Hotel{
-			ID:        getStringField(doc, "id"),
-			Name:      getStringField(doc, "name"),
-			Address:   getStringField(doc, "address"),
-			City:      getStringField(doc, "city"),
-			State:     getStringField(doc, "state"),
-			Rating:    getFloatField(doc, "rating"),
-			Amenities: amenities,
+		hotel := dao.Hotel{
+			IdMongo:         getStringField(doc, "_id"),
+			Name:            getStringField(doc, "name"),
+			Address:         getStringField(doc, "address"),
+			City:            getStringField(doc, "city"),
+			State:           getStringField(doc, "state"),
+			Rating:          getFloatField(doc, "rating"),
+			Amenities:       amenities,
+			Price:           getFloatField(doc, "price"),
+			Available_rooms: getIntField(doc, "available_rooms"),
 		}
 		hotelsList = append(hotelsList, hotel)
 	}
@@ -267,4 +222,14 @@ func getFloatField(doc map[string]interface{}, field string) float64 {
 	return 0.0
 }
 
-*/
+func getIntField(doc map[string]interface{}, field string) int64 {
+	if val, ok := doc[field].(int64); ok {
+		return val
+	}
+	if val, ok := doc[field].([]interface{}); ok && len(val) > 0 {
+		if intVal, ok := val[0].(int64); ok {
+			return intVal
+		}
+	}
+	return 0
+}

@@ -95,10 +95,8 @@ func (repository Mongo) UpdateHotel(ctx context.Context, id string, hotel hotels
 		return fmt.Errorf("error converting id to mongo ID: %w", err)
 	}
 
-	// Create an update document
 	update := bson.M{}
 
-	// Only set the fields that are not empty or their default value
 	if hotel.Name != "" {
 		update["name"] = hotel.Name
 	}
@@ -111,20 +109,19 @@ func (repository Mongo) UpdateHotel(ctx context.Context, id string, hotel hotels
 	if hotel.State != "" {
 		update["state"] = hotel.State
 	}
-	if hotel.Rating != 0 { // Assuming 0 is the default for Rating
+	if hotel.Rating != 0 {
 		update["rating"] = hotel.Rating
 	}
-	if len(hotel.Amenities) > 0 { // Assuming empty slice is the default for Amenities
+	if len(hotel.Amenities) > 0 {
 		update["amenities"] = hotel.Amenities
 	}
-	if hotel.Price != 0 { // Assuming 0 is the default for price
+	if hotel.Price != 0 {
 		update["price"] = hotel.Price
 	}
-	if hotel.Available_rooms != 0 { // Assuming 0 is the default for available rooms
+	if hotel.Available_rooms != 0 {
 		update["available rooms"] = hotel.Available_rooms
 	}
 
-	// Update the document in MongoDB
 	if len(update) == 0 {
 		return fmt.Errorf("no fields to update for hotel ID %s", hotel.ID)
 	}

@@ -13,23 +13,23 @@ import (
 func main() {
 	// Solr
 	solrRepo := repositories.NewSolr(repositories.SolrConfig{
-		Host:       "solr",   // Solr host
-		Port:       "8983",   // Solr port
-		Collection: "hotels", // Collection name
+		Host:       "localhost", // Solr host
+		Port:       "8983",      // Solr port
+		Collection: "hotels",    // Collection name
 	})
 
 	// Rabbit
 	eventsQueue := queues.NewRabbit(queues.RabbitConfig{
-		Host:      "rabbitmq",
+		Host:      "localhost",
 		Port:      "5672",
-		Username:  "root",
-		Password:  "root",
-		QueueName: "hotels-news",
+		Username:  "guest",
+		Password:  "guest",
+		QueueName: "hotelUCC",
 	})
 
 	// Hotels API
 	hotelsAPI := repositories.NewHTTP(repositories.HTTPConfig{
-		Host: "hotels-api",
+		Host: "localhost",
 		Port: "8081",
 	})
 
