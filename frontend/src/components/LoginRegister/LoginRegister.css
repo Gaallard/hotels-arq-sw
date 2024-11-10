@@ -1,0 +1,129 @@
+
+.wrapper {
+  position: relative;
+  width: 420px;
+  height: 450px;
+  background: rgba(58, 63, 66, 0.9); 
+  border-radius: 15px; 
+  color: #f5f5f5; 
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2); 
+  display: flex;
+  align-items: center;
+  overflow: hidden;
+  transition: height 0.5s ease;
+}
+
+.wrapper.active {
+  height: 520px; 
+}
+
+.wrapper .from-box {
+  width: 100%;
+  padding: 40px;
+  transition: transform 0.5s ease; 
+}
+
+
+.wrapper .from-box.login {
+  transform: translateX(0); 
+}
+
+.wrapper.active .from-box.login {
+  transform: translateX(-400px); 
+}
+
+.wrapper .from-box.register {
+  position: absolute;
+  transform: translateX(400px); 
+  transition: transform 0.5s ease;
+}
+
+.wrapper.active .from-box.register {
+  transform: translateX(0); 
+}
+
+
+form h1 {
+  font-size: 32px;
+  text-align: center;
+  color: #E0A96D; 
+  margin-bottom: 20px;
+}
+
+
+form .input-box {
+  position: relative;
+  width: 100%;
+  height: 50px;
+  margin: 20px 0;
+}
+
+.input-box input {
+  width: 100%;
+  height: 100%;
+  background-color: #2E3336; 
+  border: none;
+  outline: none;
+  border-radius: 10px; 
+  font-size: 16px;
+  padding: 0 20px;
+  box-shadow: 0 5px 10px rgba(0, 0, 0, 0.15); 
+  transition: all 0.3s ease;
+  color: #f5f5f5; 
+}
+
+.input-box input:focus {
+  box-shadow: 0 0 10px rgba(224, 169, 109, 0.5); 
+  border: 1px solid #E0A96D; 
+}
+
+.input-box input::placeholder {
+  color: #B2B2B2; 
+}
+
+.input-box .icon {
+  position: absolute;
+  right: 15px;
+  top: 50%;
+  transform: translateY(-50%);
+  font-size: 18px;
+  color: #B2B2B2; 
+}
+
+
+
+/* botones */
+form button {
+  width: 100%;
+  height: 45px;
+  background-color: #4A4F52; 
+  border: none;
+  border-radius: 10px;
+  color: #fff;
+  font-size: 16px;
+  font-weight: bold;
+  cursor: pointer;
+  transition: background-color 0.3s ease;
+  margin-top: 20px;
+}
+
+form button:hover {
+  background-color: #6C7175;
+}
+
+/* Enlace de registro */
+form .register {
+  text-align: center;
+  font-size: 14px;
+  margin-top: 15px;
+}
+
+.register p a {
+  color: #E0A96D; 
+  text-decoration: none;
+  font-weight: 600;
+}
+
+.register p a:hover {
+  text-decoration: underline;
+}

@@ -1,0 +1,85 @@
+.contenedor-misreservas {
+    background: #333;
+    color: #f5f5f5;
+    padding: 40px;
+    border-radius: 15px;
+    max-width: 800px;
+    margin: 0 auto;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3); 
+    text-align: center;
+    position: relative; 
+  }
+  
+  h1 {
+    font-size: 36px;
+    color: #E0A96D;
+    margin-bottom: 20px;
+  }
+  
+  .grilla-hoteles {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+    list-style-type: none;
+    padding: 0;
+  }
+  
+  .lista-hoteles {
+    background: #444; 
+    padding: 20px;
+    border-radius: 10px;
+    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2); 
+    text-align: left;
+    transition: transform 0.3s ease;
+  }
+  
+  .lista-hoteles:hover {
+    transform: scale(1.02); 
+  }
+  
+  .lista-hoteles h2 {
+    color: #E0A96D; 
+    font-size: 24px;
+    margin-bottom: 10px;
+  }
+  
+  .card p {
+    color: #ddd; 
+    margin-bottom: 10px;
+  }
+  
+  .boton-casa {
+    position: absolute;
+    top: 20px;
+    right: 20px;
+    background-color: transparent;
+    border: none;
+    font-size: 24px;
+    color: #f5f5f5;
+    cursor: pointer;
+    display: inline-block;
+    margin-left: 10px;
+  }
+  
+
+  
+  .icon {
+    color: #E0A96D;
+  }
+  
+  button {
+    background-color: #E0A96D; 
+    color: #333;
+    border: none;
+    padding: 10px 20px;
+    border-radius: 5px;
+    cursor: pointer;
+    font-size: 16px;
+    transition: background-color 0.3s ease;
+    margin-top: 10px;
+  }
+  
+  button:hover {
+    background-color: #c89054; 
+  }
+  
