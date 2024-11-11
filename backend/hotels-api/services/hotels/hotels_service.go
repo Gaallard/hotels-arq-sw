@@ -7,12 +7,14 @@ import (
 	"hotels-api/dao/hotels"
 	hotelsDAO "hotels-api/dao/hotels"
 	hotelsDomain "hotels-api/domain/hotels"
+	"sync"
 )
 
 type Repository interface {
 	GetHotelByID(ctx context.Context, id string) (hotels.Hotel, error)
 	InsertHotel(ctx context.Context, hotel hotels.Hotel) (string, error)
 	UpdateHotel(ctx context.Context, id string, hotel hotels.Hotel) error
+	GetAllHotels(ctx context.Context) ([]hotels.Hotel, error)
 }
 
 type RabbitMQ interface {
@@ -23,6 +25,11 @@ type Service struct {
 	mainRepository  Repository
 	cacheRepository Repository
 	rabbitRpo       RabbitMQ
+}
+
+type RoomAvailability struct {
+	HotelID        string
+	AvailableRooms int64
 }
 
 func NewService(mainRepository Repository, cacheRepository Repository, rabbitRepo RabbitMQ) Service {
@@ -61,6 +68,75 @@ func (service Service) GetHotelByID(ctx context.Context, id string) (hotelsDomai
 		Price:           hotelDAO.Price,
 		Available_rooms: hotelDAO.Available_rooms,
 	}, nil
+}
+
+func (service Service) GetAllHotels(ctx context.Context) error {
+	//ctx := context.Background()
+	hotelDAO, err := service.mainRepository.GetAllHotels(ctx)
+	if err != nil {
+		return fmt.Errorf("error getting hotel from mainrepo: %w", err)
+	}
+
+	// prueba que envia mensaje, cambiar dsp en funciones utiles
+	//service.rabbitRpo.Publish(id)
+	// Convert DAO to DTO
+
+	for _, hotels := range hotelDAO {
+		if err := service.rabbitRpo.Publish(hotelsDomain.HotelNew{
+			Operation: "CREATE",
+			HotelID:   hotels.IdMongo,
+		}); err != nil {
+			return fmt.Errorf("error publishing hotel new: %w", err)
+		}
+		println("Se encontro este hotel: ", hotels.IdMongo)
+	}
+	return nil
+}
+
+func (service Service) GetHotelsAvailability(ctx context.Context) (map[string]int64, error) {
+
+	hotelDAO, err := service.mainRepository.GetAllHotels(ctx)
+	if err != nil {
+		return nil, fmt.Errorf("error getting hotels: %w", err)
+	}
+
+	result := make(map[string]int64)
+
+	var waitGroup sync.WaitGroup
+	waitGroup.Add(len(hotelDAO))
+
+	ch := make(chan RoomAvailability)
+
+	go func() {
+		for roomAvailability := range ch {
+			if roomAvailability.AvailableRooms > 0 {
+				result[roomAvailability.HotelID] = roomAvailability.AvailableRooms
+			}
+		}
+	}()
+
+	for _, hotel := range hotelDAO {
+		go service.GetHotelRooms(ctx, hotel.IdMongo, &waitGroup, ch)
+	}
+
+	waitGroup.Wait()
+	close(ch)
+
+	return result, nil
+}
+
+func (service Service) GetHotelRooms(ctx context.Context, hotelID string, group *sync.WaitGroup, ch chan RoomAvailability) {
+	defer group.Done()
+
+	hotel, err := service.mainRepository.GetHotelByID(ctx, hotelID)
+	if err != nil {
+		return
+	}
+
+	ch <- RoomAvailability{
+		HotelID:        hotel.IdMongo,
+		AvailableRooms: hotel.Available_rooms,
+	}
 }
 
 func (service Service) InsertHotel(ctx context.Context, hotel hotelsDomain.Hotel) (string, error) {

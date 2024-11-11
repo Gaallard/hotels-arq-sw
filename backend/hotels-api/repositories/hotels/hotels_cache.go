@@ -35,6 +35,10 @@ func NewCache(config CacheConfig) Cache {
 	}
 }
 
+func (repo Cache) GetAllHotels(ctx context.Context) ([]hotelsDAO.Hotel, error) {
+	return []hotelsDAO.Hotel{}, nil
+}
+
 func (repo Cache) GetHotelByID(ctx context.Context, id string) (hotelsDAO.Hotel, error) {
 	key := fmt.Sprintf(keyFormat, id)
 	item := repo.client.Get(key)

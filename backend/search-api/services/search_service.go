@@ -41,7 +41,7 @@ func (service Service) Search(ctx context.Context, query string, offset int, lim
 	hotelsDomainList := make([]hotelsDomain.Hotel, 0)
 	for _, hotel := range hotelsDAOList {
 		hotelsDomainList = append(hotelsDomainList, hotelsDomain.Hotel{
-			ID:              hotel.ID,
+			IdMongo:         hotel.IdMongo,
 			Name:            hotel.Name,
 			Address:         hotel.Address,
 			City:            hotel.City,
@@ -70,7 +70,7 @@ func (service Service) HandleHotelNew(hotelNew hotelsDomain.HotelNew) {
 		}
 
 		hotelDAO := hotelsDAO.Hotel{
-			ID:              hotel.ID,
+			IdMongo:         hotel.IdMongo,
 			Name:            hotel.Name,
 			Address:         hotel.Address,
 			City:            hotel.City,

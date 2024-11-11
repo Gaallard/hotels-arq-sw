@@ -74,6 +74,28 @@ func (repository Mongo) GetHotelByID(ctx context.Context, id string) (hotelsDAO.
 	return hotelDAO, nil
 }
 
+func (repository Mongo) GetAllHotels(ctx context.Context) ([]hotelsDAO.Hotel, error) {
+	// Get from MongoDB
+
+	result, err := repository.client.Database(repository.database).Collection(repository.collection).Find(ctx, bson.M{})
+	if err != nil {
+		return []hotelsDAO.Hotel{}, fmt.Errorf("error to get all hotels: %w", err)
+	}
+
+	// Convert document to DAO
+	var hotels []hotelsDAO.Hotel
+	for result.Next(ctx) {
+		var hotel hotelsDAO.Hotel
+		if err := result.Decode(&hotel); err != nil {
+			return nil, fmt.Errorf("error decoding document: %w", err)
+		}
+		hotels = append(hotels, hotel)
+		println("Se capo un hotel")
+	}
+
+	return hotels, nil
+}
+
 func (repository Mongo) InsertHotel(ctx context.Context, hotel hotelsDAO.Hotel) (string, error) {
 	result, err := repository.client.Database(repository.database).Collection(repository.collection).InsertOne(ctx, hotel)
 	if err != nil {

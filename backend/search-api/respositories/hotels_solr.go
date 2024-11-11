@@ -37,7 +37,7 @@ func NewSolr(config SolrConfig) Solr {
 func (searchEngine Solr) Index(ctx context.Context, hotel dao.Hotel) (string, error) {
 	// Prepare the document for Solr
 	doc := map[string]interface{}{
-		"_id":             hotel.IdMongo,
+		"id":              hotel.IdMongo,
 		"name":            hotel.Name,
 		"address":         hotel.Address,
 		"city":            hotel.City,
@@ -77,10 +77,10 @@ func (searchEngine Solr) Index(ctx context.Context, hotel dao.Hotel) (string, er
 }
 
 // Update modifies an existing hotel document in the Solr collection
+// Prepare the document for Solr
 func (searchEngine Solr) Update(ctx context.Context, hotel dao.Hotel) error {
-	// Prepare the document for Solr
 	doc := map[string]interface{}{
-		"_id":             hotel.IdMongo,
+		"id":              hotel.IdMongo,
 		"name":            hotel.Name,
 		"address":         hotel.Address,
 		"city":            hotel.City,
@@ -92,10 +92,18 @@ func (searchEngine Solr) Update(ctx context.Context, hotel dao.Hotel) error {
 	}
 
 	// Prepare the update request
-	updateRequest := map[string]interface{}{
-		"add": []interface{}{doc}, // Use "add" with a list of documents
+	if err := searchEngine.Delete(ctx, hotel.IdMongo); err != nil {
+		return fmt.Errorf("error deleting hotel before update: %w", err)
 	}
 
+	updateRequest := map[string]interface{}{
+		"add": []interface{}{
+			map[string]interface{}{
+				"doc":       doc,
+				"overwrite": true, // Habilita el comportamiento de actualización
+			},
+		},
+	}
 	// Update the document in Solr
 	body, err := json.Marshal(updateRequest)
 	if err != nil {
@@ -103,6 +111,7 @@ func (searchEngine Solr) Update(ctx context.Context, hotel dao.Hotel) error {
 	}
 
 	// Execute the update request using the Update method
+
 	resp, err := searchEngine.Client.Update(ctx, searchEngine.Collection, solr.JSON, bytes.NewReader(body))
 	if err != nil {
 		return fmt.Errorf("error updating hotel: %w", err)
@@ -123,7 +132,7 @@ func (searchEngine Solr) Delete(ctx context.Context, id string) error {
 	// Prepare the delete request
 	docToDelete := map[string]interface{}{
 		"delete": map[string]interface{}{
-			"_id": id,
+			"sid": id,
 		},
 	}
 
