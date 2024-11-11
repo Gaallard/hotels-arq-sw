@@ -5,10 +5,12 @@ WORKDIR /app
 
 COPY package*.json ./
 
-RUN rm -rf node_modules && npm ci
+# Instala las dependencias
+RUN npm install
 
 COPY . .
 
+# Construye la aplicación
 RUN npm run build
 
 # Etapa de producción

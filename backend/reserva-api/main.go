@@ -18,7 +18,7 @@ func main() {
 	sqlconfig := repo.SQLConfig{
 		Name: "reservas",
 		User: "root",
-		Pass: "Tomas1927",
+		Pass: "Tomihuspenina2003",
 		Host: "localhost",
 	}
 

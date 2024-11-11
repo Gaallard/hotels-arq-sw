@@ -8,5 +8,5 @@ RUN go build -o hotels .
 FROM alpine:latest
 WORKDIR /app
 COPY --from=builder /app/hotels .  
-EXPOSE 8080  
+EXPOSE 8081  
 ENTRYPOINT ["/app/hotels"] 

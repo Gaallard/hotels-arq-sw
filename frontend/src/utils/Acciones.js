@@ -4,27 +4,27 @@ const authToken = localStorage.getItem('token');
  
 export async function login(userData) {
   try {
-        const response = await axios.post('http://localhost:8080/users/login', userData, {
-            credentials: "include",
-        });
-        console.log('Login response: ', response);
-        localStorage.setItem('token', response.data.Token);
-        return response.data.Token;
-    } catch (error) {
-        console.error('Login error: ', error);
-        throw error;
-    }
+    const response = await axios.post('http://localhost:8080/users/login', userData, {
+      credentials: "include",
+    });
+    console.log('Login response: ', response);
+    localStorage.setItem('token', response.data.Token);
+    return response.data.Token;
+  } catch (error) {
+    console.error('Login error: ', error);
+    throw error;
+  }
 }
 
 export async function register(userData){
   try {
-        const response = await axios.post('http://localhost:8080/users', userData);
-        console.log('Register response:', response);
-        return response.data;
-    } catch (error) {
-        console.error('Register error:', error);
-        throw error;
-    }
+    const response = await axios.post('http://localhost:8080/users', userData);
+    console.log('Register response:', response);
+    return response.data;
+  } catch (error) {
+    console.error('Register error:', error);
+    throw error;
+  }
 }
 
 export async function insertHotel(Data){
@@ -53,6 +53,18 @@ export async function updateHotel(hotelId, Data) {
     }
 }
 
+export async function getHotel(hotelId) {
+  try {
+      const response = await axios.get(`http://localhost:8081/hotels/${hotelId}`, {
+          headers: { 'Authorization': `Bearer ${authToken}` }
+      });
+      console.log('Hotel actualizado: ', response);
+      return response.data;
+  } catch (error) {
+      console.error('Error al actualizar el hotel: ', error);
+      throw error;
+  }
+}
 
 export async function reserva(Data){
   const token = await tokenId();

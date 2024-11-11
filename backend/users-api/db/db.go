@@ -1,8 +1,8 @@
 package db
 
 import (
-	users "users-api/client"
-	model "users-api/model"
+	userClient "backend/clients/users"
+	Model "backend/model"
 
 	"github.com/jinzhu/gorm"
 	_ "github.com/jinzhu/gorm/dialects/mysql"
@@ -15,9 +15,30 @@ var (
 )
 
 func init() {
+
+	/*
+		DBName := os.Getenv("DB_NAME")
+		DBUser := os.Getenv("DB_USER")
+		DBPass := os.Getenv("DB_PASSWORD")
+		DBHost := os.Getenv("DB_HOST")
+		DBPort := os.Getenv("DB_PORT")
+		// ------------------------
+
+		dsn := DBUser + ":" + DBPass + "@tcp(" + DBHost + ":" + DBPort + ")/" + DBName + "?charset=utf8&parseTime=True"
+		db, err = gorm.Open("mysql", dsn)
+
+		if err != nil {
+			log.Info("Connection Failed to Open")
+			log.Fatal(err)
+		} else {
+			log.Info("Connection Established")
+		}
+
+		userClient.Db = db*/
+
 	DBName := "users"
 	DBUser := "root"
-	DBPass := "Tomas1927"
+	DBPass := "Tomihuspenina2003"
 	DBHost := "localhost"
 
 	db, err = gorm.Open("mysql", DBUser+":"+DBPass+"@tcp("+DBHost+":3306)/"+DBName+"?charset=utf8&parseTime=True")
@@ -29,11 +50,10 @@ func init() {
 		log.Info("Connection Established")
 	}
 
-	users.Db = db
+	userClient.Db = db
 }
 
 func StartDbEngine() {
-	db.AutoMigrate(&model.User{})
-
-	log.Info("Finishing Migration Database Table")
+	db.AutoMigrate(&Model.User{})
+	log.Info("Finishing Migration Database Tables")
 }

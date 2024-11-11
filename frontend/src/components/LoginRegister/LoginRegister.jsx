@@ -1,106 +1,84 @@
 import React, { useState } from "react";
-import swal from 'sweetalert2';
+import Swal from 'sweetalert2';
 import './LoginRegister.css';
 import { FaUserAlt, FaLock } from "react-icons/fa";
-import axios from 'axios';
+import { useNavigate } from 'react-router-dom';
+import { login, register } from '../../utils/Acciones.js';
 
 const LoginRegister = () => {
-  const [action, setAction] = useState('');
-  const [username, setUsername] = useState('');
+  const [user, setUser] = useState('');
   const [password, setPassword] = useState('');
-  const [registerUsername, setRegisterUsername] = useState('');
-  const [registerPassword, setRegisterPassword] = useState('');
+  const navigate = useNavigate();
+  const [action, setAction] = useState();
 
   const registerLink = () => {
     setAction('active');
   };
-
+  
   const loginLink = () => {
     setAction('');
   };
 
-  /*
-  const handleRegister = (e) => {
+  const handleSubmitLogin = (e) => {
     e.preventDefault();
- 
-    if (registerUsername && registerPassword) {
-      swal.fire("Registro exitoso", "Bienvenido", "success").then(() => {
-        window.location.href = "/users";
-      });
-    } else {
-      swal.fire("Error", "No se pudo registrar al usuario", "error");
-    }
-  };*/
+    const userData = { user, password };
 
-  const handleLogin = async (e) => {
-    e.preventDefault();
-    try {
-      const response = await axios.post('http://localhost:8080/users/login', {
-        username,
-        password
-      });
-  
-      if (response.status === 200) {
-        const { idUser, role, token } = response.data;
-        sessionStorage.setItem('token', token);
-        sessionStorage.setItem('role', role);
-  
-        swal.fire("Login exitoso", "Bienvenido", "success").then(() => {
-          if (role === 1) { // Asumiendo que role = 1 es admin
-            window.location.href = "/AdminControl";
-          } else {
-            window.location.href = "/courses";
-          }
+    login(userData)
+      .then(token => {
+        Swal.fire({
+          icon: 'success',
+          title: 'Login exitoso',
+          text: `Bienvenido, ${user}!`,
         });
-  
-      } else {
-        swal.fire("Error", "Usuario o contraseña incorrectos", "error");
-      }
-    } catch (error) {
-      console.error("Error during login:", error);
-      swal.fire('Error durante el login', error.message, 'error');
-    }
+        localStorage.setItem('user', user);
+        navigate('/home');
+      })
+      .catch(err => {
+        Swal.fire({
+          icon: 'error',
+          title: 'Error en el Login',
+          text: 'Usuario o contraseña inválidos',
+        });
+        console.log(err);
+      });
   };
   
-  
-  const handleRegister = async (e) => {
+  const handleSubmitRegister = (e) => {
     e.preventDefault();
-    try {
-      const response = await axios.post('http://localhost:8080/users/register', {
-        username: registerUsername,
-        password: registerPassword
-      });
-      if (response.status === 201) {
-        swal.fire("Registro exitoso", "Bienvenido", "success").then(() => {
-          window.location.href = "/users";
-        });
-      } else if (response.status === 400) {
-        swal.fire("Error", "El usuario ya existe", "error");
-      } else {
-        swal.fire("Error", "No se pudo registrar al usuario", "error");
-      }
-    } catch (error) {
-      console.error("Error during registration:", error);
-      alert('Error during registration');
-    }
-  };
-  
+    const userData = { user, password };
 
-  const isLoginComplete = username && password;
-  const isRegisterComplete = registerUsername && registerPassword;
+    register(userData)
+      .then(res => {
+        Swal.fire({
+          icon: 'success',
+          title: 'Registro exitoso',
+          text: 'Usuario registrado exitosamente',
+        }).then(() => {
+          window.location.href = "/";
+        });
+      })
+      .catch(err => {
+        Swal.fire({
+          icon: 'error',
+          title: 'Error en el Registro',
+          text: 'Usuario o contraseña inválidos',
+        });
+        console.log(err);
+      });
+  };
 
   return (
     <div className={`wrapper ${action}`}>
       <div className="from-box login">
-        <form onSubmit={handleLogin}>
+        <form onSubmit={handleSubmitLogin}>
           <h1>Login</h1>
           <div className="input-box">
             <input 
               type="text" 
               placeholder="Usuario" 
               required 
-              value={username} 
-              onChange={(e) => setUsername(e.target.value)} 
+              value={user} 
+              onChange={(e) => setUser(e.target.value)} 
             />
             <FaUserAlt className="icon" />
           </div>
@@ -114,7 +92,7 @@ const LoginRegister = () => {
             />
             <FaLock className="icon" />
           </div>
-          <button type="submit" disabled={!isLoginComplete}>Login</button>
+          <button type="submit">Login</button>
           <div className="register">
             <p>No tienes una cuenta? <a href="#" onClick={registerLink}>Regístrate</a></p>
           </div>
@@ -122,15 +100,15 @@ const LoginRegister = () => {
       </div>
 
       <div className="from-box register">
-        <form onSubmit={handleRegister}>
+        <form onSubmit={handleSubmitRegister}>
           <h1>Regístrate</h1>
           <div className="input-box">
             <input 
               type="text" 
               placeholder="Usuario" 
               required 
-              value={registerUsername} 
-              onChange={(e) => setRegisterUsername(e.target.value)} 
+              value={user} 
+              onChange={(e) => setUser(e.target.value)} 
             />
             <FaUserAlt className="icon" />
           </div>
@@ -139,12 +117,12 @@ const LoginRegister = () => {
               type="password" 
               placeholder="Contraseña" 
               required 
-              value={registerPassword} 
-              onChange={(e) => setRegisterPassword(e.target.value)} 
+              value={password} 
+              onChange={(e) => setPassword(e.target.value)} 
             />
             <FaLock className="icon" />
           </div>
-          <button type="submit" disabled={!isRegisterComplete}>Registrarse</button>
+          <button type="submit">Registrarse</button>
           <div className="register-link">
             <p>¿Ya tienes una cuenta? <a href="#" onClick={loginLink}>Login</a></p>
           </div>

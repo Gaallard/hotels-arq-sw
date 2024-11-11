@@ -93,7 +93,7 @@ services:
       context: ./backend/hotels-api
       dockerfile: Dockerfile
     ports:
-      - "8080:8080"
+      - "8081:8081"
     depends_on:
       rabbit:
         condition: service_healthy
@@ -112,7 +112,7 @@ services:
       context: ./backend/users-api
       dockerfile: Dockerfile
     ports:
-      - "8081:8081"
+      - "8080:8080"
     depends_on:
       memcached:
         condition: service_healthy
@@ -172,5 +172,5 @@ services:
       - reserva-api
 
 networks:
-  default:
+  app-networks:
     driver: bridge

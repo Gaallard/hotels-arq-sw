@@ -6,6 +6,7 @@ import (
 	hotelsRepository "hotels-api/repositories/hotels"
 	hotelsService "hotels-api/services/hotels"
 	"log"
+	"net/http"
 
 	"github.com/gin-gonic/gin"
 )
@@ -13,6 +14,20 @@ import (
 func main() {
 
 	router := gin.Default()
+
+	router.Use(func(c *gin.Context) {
+		c.Writer.Header().Set("Access-Control-Allow-Origin", "http://localhost:3000")
+		c.Writer.Header().Set("Access-Control-Allow-Methods", "POST, GET, OPTIONS, PUT, DELETE, UPDATE")
+		c.Writer.Header().Set("Access-Control-Allow-Headers", "Origin, Authorization, Content-Type, X-Auth-Token")
+		c.Writer.Header().Set("Access-Control-Expose-Headers", "Content-Length")
+		c.Writer.Header().Set("Access-Control-Allow-Credentials", "true")
+
+		if c.Request.Method == "OPTIONS" {
+			c.AbortWithStatus(http.StatusOK)
+			return
+		}
+		c.Next()
+	})
 
 	// Config
 	cacheConfig := hotelsRepository.CacheConfig{
@@ -24,8 +39,8 @@ func main() {
 	mongoConfig := hotelsRepository.MongoConfig{
 		Host:       "localhost",
 		Port:       "27017",
-		Username:   "frantmateos", //fran:
-		Password:   "Tomas1927",   //fran:
+		Username:   "root", //fran:
+		Password:   "root", //fran:
 		Database:   "hotels",
 		Collection: "hotels",
 	}

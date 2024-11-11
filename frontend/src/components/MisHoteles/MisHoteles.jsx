@@ -3,8 +3,6 @@ import { Link } from 'react-router-dom';
 import './MisHoteles.css';
 import { FaHome } from 'react-icons/fa';
 import { useNavigate } from 'react-router-dom';
-import axios from 'axios';
-
 const MisHoteles = () => {
   const [hoteles, setHoteles] = useState([]);
   const navigate = useNavigate();

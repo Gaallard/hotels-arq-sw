@@ -143,6 +143,7 @@ const MisHoteles = () => {
 
     const [hotels, setHotels] = useState([]);
     const [isAdmin, setRole] = useState('');
+
     useEffect(() => {
         const fetchRole = async () => {
             try {
@@ -157,6 +158,28 @@ const MisHoteles = () => {
         fetchRole();
     }, []);
 
+    /*
+    useEffect(() => {
+      fetch(`http://localhost:8081/hotels`, {
+        headers: {
+          'Authorization': `Bearer ${localStorage.getItem('token')}`
+        }
+      })
+        .then(response => {
+          console.log("Raw response:", response);
+          if (!response.ok) {
+            throw new Error('Network response was not ok');
+          }
+          return response.json();
+        })
+        .then(data => {
+          setHotels(data.results); // Inicialmente muestra todos los hoteles
+        })
+        .catch(error => {
+          console.error('Error fetching all hotels:', error.message);
+        });
+    }, []);*/
+
     useEffect(() => {
       fetch(`http://localhost:8081/hotels`, {
           headers: {
@@ -164,27 +187,27 @@ const MisHoteles = () => {
           }
       })
           .then(response => response.json())
-          .then(data => {
-              //setAllHotels(data.results);
-              setHotels(data.results); // Inicialmente muestra todos los cursos
-          })
+          .then(data => setHotels(data.results))
           .catch(error => {
-              console.error('Error fetching all hotels:', error.message);
+              console.error('Error fetching hotels:', error.message);
+              console.error('Error details:', error.response);
           });
   }, []);
 
-  const handleSubmit = (e) => {
+  const handleSubmitHotel = (e) => {
       e.preventDefault();
       const Data = { name, address, country, city, state, amenities, rating, price, available_rooms };
 
       insertHotel(Data).then(res => {
               setMensaje('Hotel creado exitosamente.');
+              localStorage.setItem('hotel name: ', name);
               navigate("/home"); // Redirige a la página principal o a otra página después de crear el hotel
           }).catch(err => {
               setMensaje('Error al crear hotel');
               console.log(err);
           });
   };
+  
 
      // Función para la actualización del hotel
      const handleUpdateHotel = async () => {
@@ -271,7 +294,7 @@ const MisHoteles = () => {
 
       {showAddDialog && (
     <div className="modal">
-      <form onSubmit={handleSubmit}>
+      <form onSubmit={handleSubmitHotel}>
        <div className="modal-content">
         <h2>Agregar Nuevo Hotel</h2>
         <input type="text" id="name" value={name} onChange={(e) => setName(e.target.value)} placeholder="Nombre del Hotel" />

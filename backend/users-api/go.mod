@@ -1,6 +1,6 @@
-module users-api
+module backend
 
-go 1.23.2
+go 1.22.1
 
 require (
 	github.com/dgrijalva/jwt-go v3.2.0+incompatible
@@ -8,6 +8,7 @@ require (
 	github.com/gin-gonic/gin v1.10.0
 	github.com/jinzhu/gorm v1.9.16
 	github.com/json-iterator/go v1.1.12
+	github.com/lib/pq v1.10.9
 	github.com/sirupsen/logrus v1.9.3
 )
 
