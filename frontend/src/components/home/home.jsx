@@ -93,7 +93,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { FaHome, FaWifi, FaCoffee, FaSwimmingPool, FaParking } from 'react-icons/fa';
-import { insertHotel, updateHotel, reserva } from '../../utils/Acciones.js';
+import { insertHotel, updateHotel, reserva, getAllHotels } from '../../utils/Acciones.js';
 import { CgGym } from "react-icons/cg";
 import { MdEdit } from 'react-icons/md';
 import { FaPlus } from 'react-icons/fa';
@@ -106,26 +106,17 @@ import {tokenId} from '../../utils/Acciones';
 const MisHoteles = () => {
   const [showAddDialog, setShowAddDialog] = useState(false);
   const [showEditDialog, setShowEditDialog] = useState(false);
-
   const [selectedHotel, setSelectedHotel] = useState(null);
+  const [hotels, setHotels] = useState([]);
+  const [isAdmin, setRole] = useState('');
+  const [mensaje, setMensaje] = useState('');
+  const navigate = useNavigate();
+  const [reservas, setReservas] = useState('');
 
-  // Abre el modal de agregar
   const openAddDialog = () => setShowAddDialog(true);
-    
-  // Cierra el modal de agregar
   const closeAddDialog = () => setShowAddDialog(false);
-
-  // Abre el modal de editar con el hotel seleccionado
-  const openEditDialog = (hotel) => {
-    setSelectedHotel(hotel);
-    setShowEditDialog(true);
-  };
-
-  // Cierra el modal de editar
-  const closeEditDialog = () => {
-    setSelectedHotel(null);
-    setShowEditDialog(false);
-  };
+  const openEditDialog = (hotel) => { setSelectedHotel(hotel); setShowEditDialog(true); };
+  const closeEditDialog = () => { setSelectedHotel(null); setShowEditDialog(false); };
 
   const [name, setName] = useState('');
   const [address, setAddress] = useState(''); 
@@ -136,13 +127,6 @@ const MisHoteles = () => {
   const [rating, setRating] = useState(''); 
   const [price, setPrice] = useState(''); 
   const [available_rooms, setAvailableRooms] = useState('');
-  const [reserva, setReservas] = useState('');
-  const[mensaje, setMensaje] = useState('');
-  const navigate = useNavigate();
-  
-
-    const [hotels, setHotels] = useState([]);
-    const [isAdmin, setRole] = useState('');
 
     useEffect(() => {
         const fetchRole = async () => {
@@ -158,49 +142,26 @@ const MisHoteles = () => {
         fetchRole();
     }, []);
 
-    /*
     useEffect(() => {
-      fetch(`http://localhost:8081/hotels`, {
-        headers: {
-          'Authorization': `Bearer ${localStorage.getItem('token')}`
+      const fetchHotels = async () => {
+        try {
+          const hotelsData = await getAllHotels();
+          setHotels(hotelsData);
+        } catch (error) {
+          console.error('Error fetching hotels:', error);
         }
-      })
-        .then(response => {
-          console.log("Raw response:", response);
-          if (!response.ok) {
-            throw new Error('Network response was not ok');
-          }
-          return response.json();
-        })
-        .then(data => {
-          setHotels(data.results); // Inicialmente muestra todos los hoteles
-        })
-        .catch(error => {
-          console.error('Error fetching all hotels:', error.message);
-        });
-    }, []);*/
+      };
+      fetchHotels();
+    }, []);
 
-    useEffect(() => {
-      fetch(`http://localhost:8081/hotels`, {
-          headers: {
-              'Authorization': `Bearer ${localStorage.getItem('token')}`
-          }
-      })
-          .then(response => response.json())
-          .then(data => setHotels(data.results))
-          .catch(error => {
-              console.error('Error fetching hotels:', error.message);
-              console.error('Error details:', error.response);
-          });
-  }, []);
-
-  const handleSubmitHotel = (e) => {
+  const handleInsertHotel = (e) => {
       e.preventDefault();
       const Data = { name, address, country, city, state, amenities, rating, price, available_rooms };
 
       insertHotel(Data).then(res => {
               setMensaje('Hotel creado exitosamente.');
               localStorage.setItem('hotel name: ', name);
+              closeAddDialog();
               navigate("/home"); // Redirige a la página principal o a otra página después de crear el hotel
           }).catch(err => {
               setMensaje('Error al crear hotel');
@@ -233,20 +194,16 @@ const MisHoteles = () => {
       }
     };
     
-
   return (
     <div className="contenedor-reserva">
       <h1>Reservar</h1>
       
-
       <div className="Barra-busqueda">
         <input type="text" placeholder="Busque su hotel aqui" />
         <div className="date-picker">
           <input className="date-field" type="date" />
           <input className="date-field" type="date" />
         </div>
-
-
 
         {isAdmin && (
           <button className="Agregar-Hotel" onClick={openAddDialog}>
@@ -294,7 +251,7 @@ const MisHoteles = () => {
 
       {showAddDialog && (
     <div className="modal">
-      <form onSubmit={handleSubmitHotel}>
+      <form onSubmit={handleInsertHotel}>
        <div className="modal-content">
         <h2>Agregar Nuevo Hotel</h2>
         <input type="text" id="name" value={name} onChange={(e) => setName(e.target.value)} placeholder="Nombre del Hotel" />
@@ -313,9 +270,6 @@ const MisHoteles = () => {
     </div>
   )}
 
-  
-
-  
   {showEditDialog && selectedHotel && (
     <div className="modal">
       <form onSubmit={handleUpdateHotel}>
@@ -334,14 +288,10 @@ const MisHoteles = () => {
         <button onClick={closeEditDialog}>Cancelar</button>
       </div>
       </form>
-      
     </div>
   )}
-
     </div>
   ); 
-
-  
 };
 
 export default MisHoteles;

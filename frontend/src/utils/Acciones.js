@@ -53,17 +53,15 @@ export async function updateHotel(hotelId, Data) {
     }
 }
 
-export async function getHotel(hotelId) {
-  try {
-      const response = await axios.get(`http://localhost:8081/hotels/${hotelId}`, {
-          headers: { 'Authorization': `Bearer ${authToken}` }
-      });
-      console.log('Hotel actualizado: ', response);
-      return response.data;
-  } catch (error) {
-      console.error('Error al actualizar el hotel: ', error);
-      throw error;
-  }
+export async function getAllHotels() {
+  return axios.get("http://localhost:8081/hotels")
+  .then(function (response) {
+    return response.data.results;
+  })
+  .catch(function (error) {
+    console.error("error en la carga de los hoteles: ", error);
+    throw error;
+  })
 }
 
 export async function reserva(Data){
@@ -124,6 +122,17 @@ export async function updateReserva(Data){
         console.error('Reserva error: ', error)
         throw error;
       });
+  }
+
+  export function search(query, offset, limit){
+    return axios.get(`http://localhost:8084/search=${query}&offset=${offset}&limit=${limit}`)
+    .then(function (response){
+      return response.data
+    })
+    .catch(function (error) {
+      console.error("error searching: ", error);
+      throw error;
+    })
   }
 
 
