@@ -41,6 +41,8 @@ func NewService(mainRepository Repository, cacheRepository Repository, rabbitRep
 }
 
 func (service Service) GetHotelByID(ctx context.Context, id string) (hotelsDomain.Hotel, error) {
+	println("recibimos2: ", id)
+
 	hotelDAO, err := service.cacheRepository.GetHotelByID(ctx, id)
 	if err != nil {
 		// Get hotel from main repository
@@ -68,7 +70,32 @@ func (service Service) GetHotelByID(ctx context.Context, id string) (hotelsDomai
 		Available_rooms: hotelDAO.Available_rooms,
 	}, nil
 }
+func (service Service) GetAllHotels2(ctx context.Context) ([]hotelsDomain.Hotel, error) {
+	//ctx := context.Background()
+	hotelDAO, err := service.mainRepository.GetAllHotels(ctx)
+	if err != nil {
+		return []hotelsDomain.Hotel{}, fmt.Errorf("error getting hotel from mainrepo: %w", err)
+	}
 
+	// prueba que envia mensaje, cambiar dsp en funciones utiles
+	//service.rabbitRpo.Publish(id)
+	// Convert DAO to DTO
+	result := make([]hotelsDomain.Hotel, 0)
+	for _, hotels := range hotelDAO {
+		result = append(result, hotelsDomain.Hotel{
+			Id:              hotels.Id,
+			Name:            hotels.Name,
+			Address:         hotels.Address,
+			City:            hotels.City,
+			State:           hotels.State,
+			Rating:          hotels.Rating,
+			Amenities:       hotels.Amenities,
+			Price:           hotels.Price,
+			Available_rooms: hotels.Available_rooms,
+		})
+	}
+	return result, nil
+}
 func (service Service) GetAllHotels(ctx context.Context) error {
 	//ctx := context.Background()
 	hotelDAO, err := service.mainRepository.GetAllHotels(ctx)
@@ -79,8 +106,9 @@ func (service Service) GetAllHotels(ctx context.Context) error {
 	// prueba que envia mensaje, cambiar dsp en funciones utiles
 	//service.rabbitRpo.Publish(id)
 	// Convert DAO to DTO
-
+	//var hotelDom []hotelsDomain.Hotel
 	for _, hotels := range hotelDAO {
+
 		if err := service.rabbitRpo.Publish(hotelsDomain.HotelNew{
 			Operation: "CREATE",
 			HotelID:   hotels.Id,

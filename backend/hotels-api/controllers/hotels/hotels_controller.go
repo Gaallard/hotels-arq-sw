@@ -15,6 +15,7 @@ type Service interface {
 	InsertHotel(ctx context.Context, hotel hotelsDomain.Hotel) (string, error)
 	UpdateHotel(ctx context.Context, id string, hotel hotelsDomain.Hotel) error
 	GetHotelsAvailability(ctx context.Context) (map[string]int64, error)
+	GetAllHotels2(ctx context.Context) ([]hotelsDomain.Hotel, error)
 }
 
 type Controller struct {
@@ -27,8 +28,22 @@ func NewController(service Service) Controller {
 	}
 }
 
+func (controller Controller) GetAllHotels2(ctx *gin.Context) {
+	result, err := controller.service.GetAllHotels2(ctx.Request.Context())
+	if err != nil {
+		ctx.JSON(http.StatusInternalServerError, gin.H{
+			"error": fmt.Sprintf("error al obtener habitaciones disponibles: %v", err),
+		})
+		return
+	}
+
+	// Responder con el resultado en formato JSON
+	ctx.JSON(http.StatusOK, result)
+}
+
 func (controller Controller) GetHotelByID(ctx *gin.Context) {
-	objectID := strings.TrimSpace(ctx.Param("_id"))
+	objectID := strings.TrimSpace(ctx.Param("id"))
+	println("recibimos3: ", objectID)
 
 	hotel, err := controller.service.GetHotelByID(ctx.Request.Context(), objectID)
 	if err != nil {

@@ -39,8 +39,8 @@ func main() {
 	mongoConfig := hotelsRepository.MongoConfig{
 		Host:       "localhost",
 		Port:       "27017",
-		Username:   "root", //fran:
-		Password:   "root", //fran:
+		Username:   "frantmateos", //fran:
+		Password:   "Tomas1927",   //fran:
 		Database:   "hotels",
 		Collection: "hotels",
 	}
@@ -70,6 +70,7 @@ func main() {
 	router.GET("/hotels/:id", controller.GetHotelByID)
 	router.POST("/hotels", controller.InsertHotel)
 	router.GET("/hotels/available-rooms", controller.GetAvailableRooms)
+	router.GET("/hotels", controller.GetAllHotels2)
 
 	router.PUT("/hotels/:id", controller.UpdateHotel)
 
