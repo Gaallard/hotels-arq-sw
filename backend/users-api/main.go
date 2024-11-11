@@ -1,8 +1,8 @@
 package main
 
 import (
-	"users-api/users-api/db"
-	"users-api/users-api/router"
+	"users-api/db"
+	"users-api/router"
 
 	"github.com/gin-gonic/gin"
 )

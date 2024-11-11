@@ -1,8 +1,8 @@
 package db
 
 import (
-	users "users-api/users-api/client"
-	model "users-api/users-api/model"
+	users "users-api/client"
+	model "users-api/model"
 
 	"github.com/jinzhu/gorm"
 	_ "github.com/jinzhu/gorm/dialects/mysql"
@@ -17,7 +17,7 @@ var (
 func init() {
 	DBName := "users"
 	DBUser := "root"
-	DBPass := "root"
+	DBPass := "Tomas1927"
 	DBHost := "localhost"
 
 	db, err = gorm.Open("mysql", DBUser+":"+DBPass+"@tcp("+DBHost+":3306)/"+DBName+"?charset=utf8&parseTime=True")

@@ -56,18 +56,18 @@ func (repo Cache) GetHotelByID(ctx context.Context, id string) (hotelsDAO.Hotel,
 }
 
 func (repo Cache) InsertHotel(ctx context.Context, hotel hotelsDAO.Hotel) (string, error) {
-	key := fmt.Sprintf(keyFormat, hotel.IdMongo)
+	key := fmt.Sprintf(keyFormat, hotel.Id)
 	repo.client.Set(key, hotel, repo.duration)
-	return hotel.IdMongo, nil
+	return hotel.Id, nil
 }
 
 func (repository Cache) UpdateHotel(ctx context.Context, id string, hotel hotelsDAO.Hotel) error {
-	key := fmt.Sprintf(keyFormat, hotel.ID)
+	key := fmt.Sprintf(keyFormat, hotel.Id)
 
 	// Retrieve the current hotel data from the cache
 	item := repository.client.Get(key)
 	if item == nil {
-		return fmt.Errorf("hotel with ID %s not found in cache", hotel.ID)
+		return fmt.Errorf("hotel with ID %s not found in cache", hotel.Id)
 	}
 	if item.Expired() {
 		return fmt.Errorf("item with key %s is expired", key)

@@ -47,7 +47,7 @@ func main() {
 	// Create router
 	router := gin.Default()
 	router.GET("/search", controller.Search)
-	if err := router.Run(":8082"); err != nil {
+	if err := router.Run(":8084"); err != nil {
 		log.Fatalf("Error running application: %v", err)
 	}
 }

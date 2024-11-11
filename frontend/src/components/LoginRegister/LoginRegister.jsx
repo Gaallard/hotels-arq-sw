@@ -2,6 +2,7 @@ import React, { useState } from "react";
 import swal from 'sweetalert2';
 import './LoginRegister.css';
 import { FaUserAlt, FaLock } from "react-icons/fa";
+import axios from 'axios';
 
 const LoginRegister = () => {
   const [action, setAction] = useState('');
@@ -18,6 +19,7 @@ const LoginRegister = () => {
     setAction('');
   };
 
+  /*
   const handleRegister = (e) => {
     e.preventDefault();
  
@@ -28,7 +30,61 @@ const LoginRegister = () => {
     } else {
       swal.fire("Error", "No se pudo registrar al usuario", "error");
     }
+  };*/
+
+  const handleLogin = async (e) => {
+    e.preventDefault();
+    try {
+      const response = await axios.post('http://localhost:8080/users/login', {
+        username,
+        password
+      });
+  
+      if (response.status === 200) {
+        const { idUser, role, token } = response.data;
+        sessionStorage.setItem('token', token);
+        sessionStorage.setItem('role', role);
+  
+        swal.fire("Login exitoso", "Bienvenido", "success").then(() => {
+          if (role === 1) { // Asumiendo que role = 1 es admin
+            window.location.href = "/AdminControl";
+          } else {
+            window.location.href = "/courses";
+          }
+        });
+  
+      } else {
+        swal.fire("Error", "Usuario o contraseña incorrectos", "error");
+      }
+    } catch (error) {
+      console.error("Error during login:", error);
+      swal.fire('Error durante el login', error.message, 'error');
+    }
   };
+  
+  
+  const handleRegister = async (e) => {
+    e.preventDefault();
+    try {
+      const response = await axios.post('http://localhost:8080/users/register', {
+        username: registerUsername,
+        password: registerPassword
+      });
+      if (response.status === 201) {
+        swal.fire("Registro exitoso", "Bienvenido", "success").then(() => {
+          window.location.href = "/users";
+        });
+      } else if (response.status === 400) {
+        swal.fire("Error", "El usuario ya existe", "error");
+      } else {
+        swal.fire("Error", "No se pudo registrar al usuario", "error");
+      }
+    } catch (error) {
+      console.error("Error during registration:", error);
+      alert('Error during registration');
+    }
+  };
+  
 
   const isLoginComplete = username && password;
   const isRegisterComplete = registerUsername && registerPassword;
@@ -36,7 +92,7 @@ const LoginRegister = () => {
   return (
     <div className={`wrapper ${action}`}>
       <div className="from-box login">
-        <form>
+        <form onSubmit={handleLogin}>
           <h1>Login</h1>
           <div className="input-box">
             <input 

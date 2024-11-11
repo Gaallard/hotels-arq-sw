@@ -3,8 +3,8 @@ package users
 import (
 	"net/http"
 	"strconv"
-	dtoUsers "users-api/users-api/dto"
-	"users-api/users-api/service"
+	dtoUsers "users-api/dto"
+	users "users-api/service"
 
 	"github.com/gin-gonic/gin"
 )

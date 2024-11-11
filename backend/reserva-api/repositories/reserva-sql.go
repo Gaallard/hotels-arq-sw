@@ -22,6 +22,11 @@ type SQL struct {
 	Database string
 }
 
+// DeleteReserva implements reservas.Repository.
+func (repository SQL) DeleteReserva(ctx context.Context, reserva dao.Reserva) error {
+	panic("unimplemented")
+}
+
 func NewSql(config SQLConfig) SQL {
 	db, err := gorm.Open("mysql", config.User+":"+config.Pass+"@tcp("+config.Host+":3306)/"+config.Name+"?charset=utf8&parseTime=True")
 	if err != nil {
@@ -74,4 +79,19 @@ func (repository SQL) UpdateReserva(ctx context.Context, reserva dao.Reserva) (d
 		return reserva, fmt.Errorf("error updating document:")
 	}
 	return result, nil
+}
+
+func (repository SQL) DeleteReseva(ctx context.Context, reserva dao.Reserva) error {
+	result, err := repository.GetReservaById(reserva.ID)
+	log.Println("ID: ", reserva.ID)
+	if err != nil {
+		log.Panic("Error reversa no exists")
+		return fmt.Errorf("error reserva doesnt exists:")
+	}
+	resul := repository.db.Model(&result).Delete(reserva)
+	if resul.Error != nil {
+		log.Panic("Error deleting the hotel")
+		return fmt.Errorf("error deleting document:")
+	}
+	return nil
 }

@@ -1,24 +1,8 @@
-version: '3.9'
 
 services:
-  hotels-api:
-    build:
-      context: ./hotels-api  # Asegúrate que esta ruta sea correcta
-      dockerfile: Dockerfile
-    ports:
-      - "8080:8080"
-    depends_on:
-      - mongo
-    environment:
-      - MONGO_HOST=mongo
-      - MONGO_PORT=27017
-      - MONGO_USER=root
-      - MONGO_PASSWORD=root
-      - MONGO_DB=hotels
-
   mongo:
     image: mongo:latest
-    container_name: my-mongo2
+    container_name: my-mongo-2
     restart: always
     environment:
       MONGO_INITDB_ROOT_USERNAME: root
@@ -27,4 +11,166 @@ services:
     ports:
       - "27017:27017"
     volumes:
-      - ./db_data:/data/db
+      - ./backend/db_data:/data/db
+    healthcheck:
+      test: ["CMD", "mongo", "--host", "localhost", "--eval", "db.runCommand({ ping: 1 })"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 10s
+
+
+  memcached:
+    container_name: cache
+    image: memcached:1.6.16
+    ports:
+      - "11211:11211"
+    healthcheck:
+      test: ["CMD", "memcached", "-h"]
+      interval: 10s
+      retries: 5
+      start_period: 10s
+      timeout: 5s
+
+
+  rabbit:
+    container_name: rabbit-mq-2
+    image: rabbitmq
+    environment:
+      RABBITMQ_DEFAULT_USER: guest
+      RABBITMQ_DEFAULT_PASS: guest
+    ports:
+      - "15672:15672"
+      - "5672:5672"
+    healthcheck:
+      test: [ "CMD", "rabbitmq-diagnostics", "status" ]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
+
+  solr:
+    container_name: solr
+    image: solr
+    ports:
+      - "8983:8983"
+    environment:
+      - SOLR_CORE=hotels
+    volumes:
+      - ./backend/search-api/solr-config:/opt/solr/server/solr/configsets/hotels
+    entrypoint:
+      - docker-entrypoint.sh
+      - solr-precreate
+      - hotels
+    healthcheck:
+      test: [ "CMD-SHELL", "curl -f http://localhost:8983/solr/admin/cores?action=STATUS&core=hotels" ]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 10s
+
+  mysql:
+    image: mysql
+    container_name: mysql
+    restart: always
+    environment:
+      MYSQL_ROOT_USER: root
+      MYSQL_ROOT_PASSWORD: Tomihuspenina2003
+      MYSQL_DATABASE: reservas
+    ports:
+      - "3307:3306"
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "root", "--password=Tomihuspenina2003"]
+      interval: 20s  
+      timeout: 10s
+      retries: 5
+      start_period: 30s  
+    volumes:
+      - ./db_data:/var/lib/mysql
+
+  hotels-api:
+    build:
+      context: ./backend/hotels-api
+      dockerfile: Dockerfile
+    ports:
+      - "8080:8080"
+    depends_on:
+      rabbit:
+        condition: service_healthy
+      mongo:
+        condition: service_started
+    environment:
+      - MONGO_HOST=mongo
+      - MONGO_PORT=27017
+      - RABBITMQ_HOST=rabbit
+      - RABBITMQ_PORT=5672
+      - RABBITMQ_USER=guest
+      - RABBITMQ_PASS=guest
+
+  users-api:
+    build:
+      context: ./backend/users-api
+      dockerfile: Dockerfile
+    ports:
+      - "8081:8081"
+    depends_on:
+      memcached:
+        condition: service_healthy
+      mysql:
+        condition: service_started
+    environment:
+      - MYSQL_HOST=mysql
+      - MYSQL_PORT=3306
+      - MYSQL_USER=root
+      - MYSQL_PASSWORD=Tomihuspenina2003
+      - MYSQL_DATABASE=users
+
+
+  reserva-api:
+    build:
+      context: ./backend/reserva-api
+      dockerfile: Dockerfile
+    ports:
+      - "8082:8082"
+    depends_on:
+      mysql:
+        condition: service_started
+    environment:
+      - MYSQL_HOST=mysql
+      - MYSQL_PORT=3306
+      - MYSQL_USER=root
+      - MYSQL_PASSWORD=Tomihuspenina2003
+      - MYSQL_DATABASE=reservas
+
+  search-api:
+    build:
+      context: ./backend/search-api
+      dockerfile: Dockerfile
+    ports:
+      - "8083:8083"
+    depends_on:
+      solr:
+        condition: service_started
+      rabbit:
+        condition: service_healthy
+    environment:
+      - RABBITMQ_HOST=rabbit
+      - RABBITMQ_PORT=5672
+      - RABBITMQ_USER=guest
+      - RABBITMQ_PASS=guest
+
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    ports:
+      - "3000:80"
+    depends_on:
+      - search-api
+      - hotels-api
+      - users-api
+      - reserva-api
+
+networks:
+  default:
+    driver: bridge

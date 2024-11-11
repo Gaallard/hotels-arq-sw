@@ -52,10 +52,11 @@ func main() {
 	}
 
 	// Router
-	router.GET("/hotels/:_id", controller.GetHotelByID)
+	router.GET("/hotels/:id", controller.GetHotelByID)
 	router.POST("/hotels", controller.InsertHotel)
-	router.PUT("hotels/:_id", controller.UpdateHotel)
 	router.GET("/hotels/available-rooms", controller.GetAvailableRooms)
+
+	router.PUT("/hotels/:id", controller.UpdateHotel)
 
 	log.Println("Servidor corriendo en http://localhost:8080")
 	if err := router.Run(":8081"); err != nil {

@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"net/http"
 	"strings"
-	client "users-api/users-api/client"
+	client "users-api/client"
 
 	"github.com/dgrijalva/jwt-go"
 	"github.com/gin-gonic/gin"

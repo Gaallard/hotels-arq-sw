@@ -57,8 +57,7 @@ func (service Service) GetHotelByID(ctx context.Context, id string) (hotelsDomai
 	//service.rabbitRpo.Publish(id)
 	// Convert DAO to DTO
 	return hotelsDomain.Hotel{
-		ID:              hotelDAO.ID,
-		IdMongo:         hotelDAO.IdMongo,
+		Id:              hotelDAO.Id,
 		Name:            hotelDAO.Name,
 		Address:         hotelDAO.Address,
 		City:            hotelDAO.City,
@@ -84,11 +83,11 @@ func (service Service) GetAllHotels(ctx context.Context) error {
 	for _, hotels := range hotelDAO {
 		if err := service.rabbitRpo.Publish(hotelsDomain.HotelNew{
 			Operation: "CREATE",
-			HotelID:   hotels.IdMongo,
+			HotelID:   hotels.Id,
 		}); err != nil {
 			return fmt.Errorf("error publishing hotel new: %w", err)
 		}
-		println("Se encontro este hotel: ", hotels.IdMongo)
+		println("Se encontro este hotel: ", hotels.Id)
 	}
 	return nil
 }
@@ -116,7 +115,7 @@ func (service Service) GetHotelsAvailability(ctx context.Context) (map[string]in
 	}()
 
 	for _, hotel := range hotelDAO {
-		go service.GetHotelRooms(ctx, hotel.IdMongo, &waitGroup, ch)
+		go service.GetHotelRooms(ctx, hotel.Id, &waitGroup, ch)
 	}
 
 	waitGroup.Wait()
@@ -134,7 +133,7 @@ func (service Service) GetHotelRooms(ctx context.Context, hotelID string, group 
 	}
 
 	ch <- RoomAvailability{
-		HotelID:        hotel.IdMongo,
+		HotelID:        hotel.Id,
 		AvailableRooms: hotel.Available_rooms,
 	}
 }
@@ -157,7 +156,7 @@ func (service Service) InsertHotel(ctx context.Context, hotel hotelsDomain.Hotel
 		return "", fmt.Errorf("Error inserting hotel into main repository: %v", err)
 	}
 
-	hotelDAO.IdMongo = id
+	hotelDAO.Id = id
 	_, err = service.cacheRepository.InsertHotel(ctx, hotelDAO)
 	if err != nil {
 		return "", fmt.Errorf("Error inserting hotel into cache: %v", err)
@@ -176,7 +175,7 @@ func (service Service) InsertHotel(ctx context.Context, hotel hotelsDomain.Hotel
 func (service Service) UpdateHotel(ctx context.Context, id string, hotel hotelsDomain.Hotel) error {
 
 	hotelDAO := hotelsDAO.Hotel{
-		IdMongo:         hotel.IdMongo,
+		Id:              hotel.Id,
 		Name:            hotel.Name,
 		Address:         hotel.Address,
 		City:            hotel.City,
