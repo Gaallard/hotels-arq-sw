@@ -27,7 +27,7 @@ func NewController(service Service) Controller {
 }
 
 func (controller Controller) GetHotelByID(ctx *gin.Context) {
-	objectID := strings.TrimSpace(ctx.Param("_id"))
+	objectID := strings.TrimSpace(ctx.Param("id"))
 
 	hotel, err := controller.service.GetHotelByID(ctx.Request.Context(), objectID)
 	if err != nil {
@@ -58,8 +58,6 @@ func (controller Controller) InsertHotel(ctx *gin.Context) {
 		return
 	}
 
-	fmt.Printf("id mongo hotel: ", result)
-
 	ctx.JSON(http.StatusCreated, gin.H{
 		"message":  "hotel created successfully",
 		"id mongo": result,
@@ -68,7 +66,7 @@ func (controller Controller) InsertHotel(ctx *gin.Context) {
 
 func (controller Controller) UpdateHotel(ctx *gin.Context) {
 
-	objectID := strings.TrimSpace(ctx.Param("_id"))
+	objectID := strings.TrimSpace(ctx.Param("id"))
 
 	var hotelDomain hotelsDomain.Hotel
 	if err := ctx.ShouldBindJSON(&hotelDomain); err != nil {

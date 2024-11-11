@@ -17,8 +17,8 @@ type Controller interface {
 func main() {
 	sqlconfig := repo.SQLConfig{
 		Name: "reservas",
-		User: "root2",
-		Pass: "Tomas1927",
+		User: "root",
+		Pass: "Tomihuspenina2003",
 		Host: "localhost",
 	}
 
@@ -29,5 +29,6 @@ func main() {
 	router.GET("/reservas/:id", Controller.GetReservaById)
 	router.POST("/reservas/", Controller.InsertReserva)
 	router.PUT("/reservas/", Controller.UpdateReserva)
+	router.DELETE("/reservas/", Controller.DeleteReserva)
 	router.Run(":8080")
 }

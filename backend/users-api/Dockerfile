@@ -1,26 +1,18 @@
-# Dockerfile for Go API
-
-# Usa una imagen base de Golang
-FROM golang:1.20-alpine
-
-# Establece el directorio de trabajo en /app
+FROM golang:1.23.2-alpine AS builder
 WORKDIR /app
 
-# Copia el archivo go.mod y go.sum al directorio de trabajo
-COPY go.mod ./
-COPY go.sum ./
-
-# Descarga las dependencias
+# Copia go.mod y go.sum para instalar dependencias
+COPY go.mod .
+COPY go.sum .
 RUN go mod download
 
-# Copia todo el código fuente al directorio de trabajo
+# Copia el resto de los archivos y construye la aplicación
 COPY . .
+RUN go build -o users .
 
-# Compila la aplicación
-RUN go build -o users-api
-
-# Expone el puerto en el que la aplicación estará escuchando
-EXPOSE 8080
-
-# Comando para ejecutar la aplicación
-CMD ["./users-api"]
+# Final stage
+FROM alpine:latest
+WORKDIR /app
+COPY --from=builder /app/users .
+EXPOSE 8081
+ENTRYPOINT [ "/app/users" ]

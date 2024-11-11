@@ -12,6 +12,7 @@ type Repository interface {
 	GetReservaById(id int64) (dao.Reserva, error)
 	InsertReserva(ctx context.Context, reserva dao.Reserva) (dao.Reserva, error)
 	UpdateReserva(ctx context.Context, reserva dao.Reserva) (dao.Reserva, error)
+	DeleteReserva(ctx context.Context, reserva dao.Reserva) error
 }
 type Service struct {
 	mainRepo Repository
@@ -98,4 +99,21 @@ func (service Service) UpdateReserva(ctx context.Context, reserva domain.Reserva
 	reserva.Noches = int64(reservaDomain.Noches)
 
 	return reserva, nil
+}
+
+func (service Service) DeleteReserva(ctx context.Context, reserva domain.Reserva) error {
+	daoReserva := dao.Reserva{
+		ID:     reserva.ID,
+		User:   int(reserva.User),
+		Noches: int(reserva.Noches),
+		Hotel:  reserva.Hotel,
+		Estado: int(reserva.Estado),
+	}
+
+	err := service.mainRepo.DeleteReserva(ctx, daoReserva)
+	if err != nil {
+		return fmt.Errorf("Error eliminando reserva service", reserva.ID, err)
+	}
+
+	return nil
 }

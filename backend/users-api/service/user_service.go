@@ -3,11 +3,11 @@ package users
 import (
 	"crypto/md5"
 	"encoding/hex"
-	client "users-api/users-api/client"
-	dto "users-api/users-api/dto"
-	token "users-api/users-api/dto"
-	e "users-api/users-api/errors"
-	model "users-api/users-api/model"
+	client "users-api/client"
+	dto "users-api/dto"
+	token "users-api/dto"
+	e "users-api/errors"
+	model "users-api/model"
 
 	"github.com/dgrijalva/jwt-go"
 )

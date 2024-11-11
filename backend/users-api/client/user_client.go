@@ -1,10 +1,10 @@
 package users
 
 import (
-	dto "users-api/users-api/dto"
-	models "users-api/users-api/model"
+	dto "users-api/dto"
+	models "users-api/model"
 
-	e "users-api/users-api/errors"
+	e "users-api/errors"
 
 	"github.com/jinzhu/gorm"
 	log "github.com/sirupsen/logrus"

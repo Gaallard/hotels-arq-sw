@@ -24,16 +24,16 @@ func (repository Mock) GetHotelByID(ctx context.Context, id string) (hotelsDAO.H
 
 func (repository Mock) InsertHotel(ctx context.Context, hotel hotelsDAO.Hotel) (string, error) {
 	id := uuid.New().String()
-	hotel.IdMongo = uuid.New().String()
+	hotel.Id = uuid.New().String()
 	repository.docs[id] = hotel
 	return id, nil
 }
 
 func (repository Mock) UpdateHotel(ctx context.Context, id string, hotel hotelsDAO.Hotel) (hotelsDAO.Hotel, error) {
 	// Check if the hotel exists in the mock storage
-	currentHotel, exists := repository.docs[hotel.IdMongo]
+	currentHotel, exists := repository.docs[hotel.Id]
 	if !exists {
-		return repository.docs[id], fmt.Errorf("hotel with ID %s not found", hotel.ID)
+		return repository.docs[id], fmt.Errorf("hotel with ID %s not found", hotel.Id)
 	}
 
 	// Update only the fields that are non-zero or non-empty
@@ -63,6 +63,6 @@ func (repository Mock) UpdateHotel(ctx context.Context, id string, hotel hotelsD
 	}
 
 	// Save the updated hotel back to the mock storage
-	repository.docs[hotel.IdMongo] = currentHotel
+	repository.docs[hotel.Id] = currentHotel
 	return repository.docs[id], nil
 }

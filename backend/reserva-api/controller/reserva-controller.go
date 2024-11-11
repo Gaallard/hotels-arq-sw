@@ -15,6 +15,7 @@ type Service interface {
 	GetReservaById(ctx context.Context, id int64) (Domain.Reserva, error)
 	InsertReserva(ctx context.Context, reserva Domain.Reserva) (Domain.Reserva, error)
 	UpdateReserva(ctx context.Context, reserva Domain.Reserva) (Domain.Reserva, error)
+	DeleteReserva(ctx context.Context, reserva Domain.Reserva) error
 }
 
 type Controller struct {
@@ -91,4 +92,25 @@ func (controller Controller) UpdateReserva(ctx *gin.Context) {
 	}
 
 	ctx.JSON(http.StatusCreated, reservaDomain)
+}
+
+func (controller Controller) DeleteReserva(ctx *gin.Context) {
+	var reservaDomain Domain.Reserva
+	err := ctx.BindJSON(&reservaDomain)
+
+	if err != nil {
+		ctx.JSON(http.StatusBadRequest, gin.H{
+			"error": fmt.Sprintf("invalid data"),
+		})
+		return
+	}
+	er := controller.service.DeleteReserva(ctx, reservaDomain)
+	if er != nil {
+		ctx.JSON(http.StatusInternalServerError, gin.H{
+			"error": fmt.Sprintf("error getting reserva: %s", er.Error()),
+		})
+		return
+	}
+
+	ctx.JSON(http.StatusOK, nil)
 }

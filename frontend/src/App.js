@@ -18,6 +18,9 @@ function App() {
 
       
           <Route path="/mishoteles" element={<MisHoteles />} />
+
+
+          <Route path="/admincontrol" element={<MisHoteles />} />
         </Routes>
       </div>
     </BrowserRouter>

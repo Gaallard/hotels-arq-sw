@@ -1,0 +1,203 @@
+/* Contenedor principal para la sección de reserva */
+.contenedor-reserva {
+    max-width: 1200px;
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 20px;
+    padding: 20px;
+    background: #333;
+    color: #f5f5f5;
+    border-radius: 8px;
+    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+  }
+  
+  /* Título principal */
+  .contenedor-reserva h1 {
+    font-size: 36px;
+    color: #E0A96D;
+    margin-bottom: 20px;
+    text-align: center;
+  }
+  
+  /* Barra de búsqueda */
+  .Barra-busqueda {
+    background: #333;
+    color: #f5f5f5;
+    padding: 20px;
+    border-radius: 8px;
+    width: 600px;
+    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+    margin-bottom: 20px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+  }
+  
+  /* Campo de texto en la barra de búsqueda */
+  .Barra-busqueda input[type='text'] {
+    width: 100%;
+    padding: 10px;
+    margin-bottom: 20px;
+    border: none;
+    border-radius: 5px;
+    font-size: 16px;
+    color: #333;
+    box-sizing: border-box;
+  }
+  
+  /* Selector de fechas */
+  .date-picker {
+    display: flex;
+    justify-content: space-between;
+    width: 100%;
+  }
+  
+  .date-field {
+    width: 48%;
+    padding: 10px;
+    border: none;
+    border-radius: 5px;
+    font-size: 16px;
+    color: #333;
+  }
+  
+  /* Botón para agregar hotel */
+  .Agregar-Hotel {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background-color: #333;
+    color: #fff;
+    padding: 10px;
+    border: none;
+    border-radius: 8px;
+    font-size: 16px;
+    cursor: pointer;
+    transition: background-color 0.3s ease;
+    width: 100%;
+    margin-top: 10px;
+  }
+  
+  .Agregar-Hotel:hover {
+    background-color: #555;
+  }
+  
+  /* Grilla para mostrar los hoteles */
+  .Grilla-amenities {
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+    padding: 0;
+    list-style-type: none;
+  }
+  
+  /* Bloque de cada hotel */
+  .bloque {
+    background: #fff;
+    border-radius: 8px;
+    padding: 20px;
+    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    transition: transform 0.3s ease;
+  }
+  
+  .bloque:hover {
+    transform: scale(1.02);
+  }
+  
+  /* Imagen del hotel */
+  .hotel-imagen {
+    width: 100%;
+    max-width: 200px;
+    height: auto;
+    border-radius: 8px;
+    margin-bottom: 10px;
+    align-self: center;
+  }
+  
+  /* Información del hotel */
+  .bloque h2 {
+    font-size: 22px;
+    margin-bottom: 10px;
+    color: #333;
+  }
+  
+  .bloque p {
+    font-size: 14px;
+    color: #666;
+    margin-bottom: 10px;
+  }
+  
+  /* Amenidades */
+  .amenities {
+    margin-top: 10px;
+  }
+  
+  .amenities h3 {
+    font-size: 18px;
+    color: #E0A96D;
+    margin-bottom: 5px;
+  }
+  
+  .Lista-amenities {
+    list-style-type: none;
+    padding: 0;
+    display: flex;
+    gap: 15px;
+    font-size: 14px;
+    color: #666;
+    flex-wrap: wrap;
+  }
+  
+  .amenitie {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+  }
+  
+  /* Grupo de botones para separarlos */
+  .boton-reserva {
+    display: flex;
+    gap: 10px;
+    margin-top: 15px;
+    flex-wrap: wrap;
+  }
+  
+  /* Botón de reserva  */
+  .boton-reserva button {
+    background-color: #333;
+    color: #fff;
+    padding: 10px 15px;
+    border: none;
+    border-radius: 8px;
+    font-size: 14px;
+    cursor: pointer;
+    transition: background-color 0.3s ease;
+    margin-top: 10px;
+  }
+  
+  .boton-reserva button:hover {
+    background-color: #555;
+  }
+  
+  /* Botón de editar */
+  .boton-editar {
+    background-color: #ff9800;
+    color: #fff;
+    padding: 8px 10px;
+    border: none;
+    border-radius: 8px;
+    font-size: 14px;
+    cursor: pointer;
+    transition: background-color 0.3s ease;
+  }
+  
+  .boton-editar:hover {
+    background-color: #ffb84d;
+  }
+  

@@ -60,7 +60,7 @@ func (repository Mongo) GetHotelByID(ctx context.Context, id string) (hotelsDAO.
 	if err != nil {
 		return hotelsDAO.Hotel{}, fmt.Errorf("error converting id to mongo ID: %w", err)
 	}
-	result := repository.client.Database(repository.database).Collection(repository.collection).FindOne(ctx, bson.M{"_id": objectID})
+	result := repository.client.Database(repository.database).Collection(repository.collection).FindOne(ctx, bson.M{"id": objectID})
 	if result.Err() != nil {
 
 		return hotelsDAO.Hotel{}, fmt.Errorf("error finding document: %w", result.Err())
@@ -123,16 +123,16 @@ func (repository Mongo) UpdateHotel(ctx context.Context, id string, hotel hotels
 	}
 
 	if len(update) == 0 {
-		return fmt.Errorf("no fields to update for hotel ID %s", hotel.ID)
+		return fmt.Errorf("no fields to update for hotel ID %s", hotel.Id)
 	}
 
-	filter := bson.M{"_id": objectID}
+	filter := bson.M{"id": objectID}
 	result, err := repository.client.Database(repository.database).Collection(repository.collection).UpdateOne(ctx, filter, bson.M{"$set": update})
 	if err != nil {
 		return fmt.Errorf("error updating document: %w", err)
 	}
 	if result.MatchedCount == 0 {
-		return fmt.Errorf("no document found with ID %s", hotel.ID)
+		return fmt.Errorf("no document found with ID %s", hotel.Id)
 	}
 
 	return nil
