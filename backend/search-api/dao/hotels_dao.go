@@ -1,8 +1,7 @@
 package dao
 
 type Hotel struct {
-	ID              int64    `bson:"id"`
-	IdMongo         string   `bson:"_id"`
+	Id              string   `bson:"_id"`
 	Name            string   `bson:"name"`
 	Address         string   `bson:"address"`
 	City            string   `bson:"city"`

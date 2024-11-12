@@ -15,7 +15,7 @@ export async function login(userData) {
     throw error;
   }
 }
-
+ 
 export async function register(userData){
   try {
     const response = await axios.post('http://localhost:8080/users', userData);
@@ -27,41 +27,61 @@ export async function register(userData){
   }
 }
 
-export async function insertHotel(Data){
+export async function insertHotel({ name, address, country, city, state, amenities, rating, price, available_rooms }) {
   try {
-        const response = await axios.post('http://localhost:8081/hotels', Data, {
-            headers: { 'Authorization': `Bearer ${authToken}` }
-        });
-        console.log('Hotel creado: ', response);
-        return response.data;
-    } catch (error) {
-        console.error('Hotel error: ', error);
-        throw error;
-    }
+      console.log("Enviando datos al servidor:", { name, address, country, city, state, amenities, rating, price, available_rooms });
+      const response = await axios.post('http://localhost:8081/hotels', 
+          { name, address, country, city, state, amenities, rating, price, available_rooms }, 
+          {
+              headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` }
+          });
+      console.log("Respuesta del servidor:", response);
+      return response.data;
+  } catch (error) {
+      console.error('Error al crear hotel en Acciones.js:', error);
+      throw error;
+  }
 }
 
-export async function updateHotel(hotelId, Data) {
-    try {
-        const response = await axios.put(`http://localhost:8081/hotels/${hotelId}`, Data, {
-            headers: { 'Authorization': `Bearer ${authToken}` }
-        });
-        console.log('Hotel actualizado: ', response);
-        return response.data;
-    } catch (error) {
-        console.error('Error al actualizar el hotel: ', error);
-        throw error;
-    }
-}
 
-export async function getAllHotels() {
-  return axios.get("http://localhost:8081/hotels")
-  .then(function (response) {
+export async function updateHotel(hotelId, hotelData) {
+  try {
+    const response = await axios.put(`http://localhost:8081/hotels/${hotelId}`, hotelData, {
+      headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` }
+    });
     return response.data;
-  })
-  .catch(function (error) {
-    console.error("error en la carga de los hoteles: ", error);
+  } catch (error) {
+    console.error('Error al actualizar el hotel:', error);
     throw error;
-  })
+  }
+}
+
+
+// Obtiene todos los hoteles
+export async function getAllHotels() {
+  try {
+    const response = await axios.get('http://localhost:8081/hotels', {
+      headers: { 'Authorization': `Bearer ${authToken}` }
+    });
+    console.log('Hoteles cargados:', response.data);
+    return response.data;
+  } catch (error) {
+    console.error('Error al obtener los hoteles:', error.response ? error.response.data : error.message);
+    throw error;
+  }
+}
+
+export async function getHotelById(hotelId) {
+  try {
+    const response = await axios.get(`http://localhost:8081/hotels/${hotelId}`, {
+      headers: { 'Authorization': `Bearer ${authToken}` }
+    });
+    console.log('Hotel cargado:', response.data);
+    return response.data;
+  } catch (error) {
+    console.error('Error al obtener los hoteles:', error.response ? error.response.data : error.message);
+    throw error;
+  }
 }
 
 export async function reserva(Data){
@@ -124,16 +144,19 @@ export async function updateReserva(Data){
       });
   }
 
-  export function search(query, offset, limit){
-    return axios.get(`http://localhost:8084/search=${query}&offset=${offset}&limit=${limit}`)
-    .then(function (response){
-      return response.data
-    })
-    .catch(function (error) {
-      console.error("error searching: ", error);
+  export async function search(query, offset, limit) {
+    const url = `http://localhost:8084/search?q=${query}&offset=${offset}&limit=${limit}`;
+    console.log("Request URL:", url); // Para verificar la URL generada
+  
+    try {
+      const response = await axios.get(url);
+      return response.data;
+    } catch (error) {
+      console.error("error searching:", error);
       throw error;
-    })
+    }
   }
+  
 
 
 

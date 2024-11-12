@@ -39,8 +39,8 @@ func main() {
 	mongoConfig := hotelsRepository.MongoConfig{
 		Host:       "localhost",
 		Port:       "27017",
-		Username:   "frantmateos", //fran:
-		Password:   "Tomas1927",   //fran:
+		Username:   "root", //fran:
+		Password:   "root", //fran:
 		Database:   "hotels",
 		Collection: "hotels",
 	}

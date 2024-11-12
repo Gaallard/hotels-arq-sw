@@ -37,7 +37,7 @@ func NewSolr(config SolrConfig) Solr {
 func (searchEngine Solr) Index(ctx context.Context, hotel dao.Hotel) (string, error) {
 	// Prepare the document for Solr
 	doc := map[string]interface{}{
-		"id":              hotel.IdMongo,
+		"id":              hotel.Id,
 		"name":            hotel.Name,
 		"address":         hotel.Address,
 		"city":            hotel.City,
@@ -73,14 +73,14 @@ func (searchEngine Solr) Index(ctx context.Context, hotel dao.Hotel) (string, er
 		return "", fmt.Errorf("error committing changes to Solr: %w", err)
 	}
 
-	return hotel.IdMongo, nil
+	return hotel.Id, nil
 }
 
 // Update modifies an existing hotel document in the Solr collection
 // Prepare the document for Solr
 func (searchEngine Solr) Update(ctx context.Context, hotel dao.Hotel) error {
 	doc := map[string]interface{}{
-		"id":              hotel.IdMongo,
+		"id":              hotel.Id,
 		"name":            hotel.Name,
 		"address":         hotel.Address,
 		"city":            hotel.City,
@@ -92,7 +92,7 @@ func (searchEngine Solr) Update(ctx context.Context, hotel dao.Hotel) error {
 	}
 
 	// Prepare the update request
-	if err := searchEngine.Delete(ctx, hotel.IdMongo); err != nil {
+	if err := searchEngine.Delete(ctx, hotel.Id); err != nil {
 		return fmt.Errorf("error deleting hotel before update: %w", err)
 	}
 
@@ -161,7 +161,12 @@ func (searchEngine Solr) Delete(ctx context.Context, id string) error {
 
 func (searchEngine Solr) Search(ctx context.Context, query string, limit int, offset int) ([]dao.Hotel, error) {
 	// Prepare the Solr query with limit and offset
-	solrQuery := fmt.Sprintf("q=(name:%s)&rows=%d&start=%d", query, limit, offset)
+	var solrQuery string
+	if query == "" {
+		solrQuery = fmt.Sprintf("q=(name:%s*)&rows=%d&start=%d", query, limit, offset)
+	} else {
+		solrQuery = fmt.Sprintf("q=(name:%s)&rows=%d&start=%d", query, limit, offset)
+	}
 
 	// Execute the search request
 	resp, err := searchEngine.Client.Query(ctx, searchEngine.Collection, solr.NewQuery(solrQuery))
@@ -189,7 +194,7 @@ func (searchEngine Solr) Search(ctx context.Context, query string, limit int, of
 
 		// Safely extract hotel fields with type assertions
 		hotel := dao.Hotel{
-			IdMongo:         getStringField(doc, "_id"),
+			Id:              getStringField(doc, "_id"),
 			Name:            getStringField(doc, "name"),
 			Address:         getStringField(doc, "address"),
 			City:            getStringField(doc, "city"),

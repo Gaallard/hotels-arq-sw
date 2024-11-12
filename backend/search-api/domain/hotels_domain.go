@@ -1,8 +1,7 @@
 package domain
 
 type Hotel struct {
-	ID              int64    `json:"id"`
-	IdMongo         string   `json:"_id"`
+	Id              string   `json:"_id"`
 	Name            string   `json:"name"`
 	Address         string   `json:"address"`
 	City            string   `json:"city"`
