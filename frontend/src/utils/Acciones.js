@@ -44,9 +44,9 @@ export async function insertHotel({ name, address, country, city, state, ameniti
 }
 
 
-export async function updateHotel(hotelId, hotelData) {
+export async function updateHotel(hotelId, { name, address, country, city, state, amenities, rating, price, available_rooms }) {
   try {
-    const response = await axios.put(`http://localhost:8081/hotels/${hotelId}`, hotelData, {
+    const response = await axios.put(`http://localhost:8081/hotels/${hotelId}`, { name, address, country, city, state, amenities, rating, price, available_rooms }, {
       headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` }
     });
     return response.data;
@@ -88,10 +88,11 @@ export async function reserva(Data){
   const token = await tokenId();
   const data = {
     "user_id": token,
-    "hotel_name": Data,
+    "hotel_id": Data.hotel_id,
   }
   console.log("data id: ",data)
-  return axios.post('http://localhost:8083/reservas',data, {
+  
+  return axios.post('http://localhost:8083/reservas/',data, {
     headers: { 'Authorization': `Bearer ${authToken}` }
   })
     .then(response => {
@@ -108,7 +109,7 @@ export async function updateReserva(Data){
     const token = await tokenId();
     const data = {
       "user_id": token,
-      "hotel_name": Data,
+      "hotel_id": Data.id,
     }
     console.log("data id: ",data)
     return axios.put('http://localhost:8083/reservas',data, {
@@ -128,7 +129,7 @@ export async function updateReserva(Data){
     const token = await tokenId();
     const data = {
       "user_id": token,
-      "hotel_name": Data,
+      "hotel_id": Data.id,
     }
     console.log("data id: ",data)
     return axios.delete('http://localhost:8083/reservas',data, {
@@ -157,9 +158,6 @@ export async function updateReserva(Data){
     }
   }
   
-
-
-
 export async function tokenId(){
     const token = localStorage.getItem('token');
     console.log("tokens: ",token);

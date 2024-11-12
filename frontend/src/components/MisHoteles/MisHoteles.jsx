@@ -3,8 +3,15 @@ import { Link } from 'react-router-dom';
 import './MisHoteles.css';
 import { FaHome } from 'react-icons/fa';
 import { useNavigate } from 'react-router-dom';
+import { updateReserva, deleteReserva,tokenId } from '../../utils/Acciones';
+
 const MisHoteles = () => {
-  const [hoteles, setHoteles] = useState([]);
+  const [hotels, setMyHotels] = useState([]);
+  const [valorID,setID] = useState('');
+  const val = async() =>{
+      const val1 = await tokenId();
+      setID(val1);
+  }; 
   const navigate = useNavigate();
 
   /*
@@ -22,6 +29,7 @@ const MisHoteles = () => {
     setHoteles(data); 
   };*/
 
+  /*
   useEffect(() => {
     const token = sessionStorage.getItem('token');
     if (!token) {
@@ -29,30 +37,22 @@ const MisHoteles = () => {
     } else {
       cargarHoteles(); // Cargar cursos inscritos si el usuario está autenticado
     }
-  }, [navigate]);
+  }, [navigate]);*/
 
-  const cargarHoteles = async () => {
-    try {
-      const token = sessionStorage.getItem('token'); // Suponiendo que el objeto usuario tiene un atributo id que representa el ID del usuario
-      const url = `http://localhost:8080/hotels/${token}`;
-      const response = await fetch(url, {
-        method: 'GET',
-        headers: {
-          'Authorization': `Bearer ${token}`
-        }
-      });
-  
-      if (!response.ok) {
-        throw new Error('Error en la carga de cursos inscritos');
-      }
-  
-      const data = await response.json();
-      setHoteles(data); 
-    } catch (error) {
-      console.error("Error durante la carga de cursos inscritos:", error);
-      alert('Error durante la carga de cursos inscritos');
-    }
-  };
+  console.log("valor de val: ",valorID)
+  useEffect(() => {
+      fetch(`http://localhost:8083/reserva/misreservas/${valorID}`, {
+          headers: {
+              'Authorization': `Bearer ${localStorage.getItem('token')}`
+          }
+      })
+      .then(response => response.json())
+          .then(data => setMyHotels(data.results))
+          .catch(error => {
+              console.error('Error fetching courses:', error.message);
+              console.error('Error details:', error.response);
+          });
+  },[valorID]);
 
   return (
     <div className="contenedor-misreservas">
@@ -63,14 +63,14 @@ const MisHoteles = () => {
         </button>
       </Link>
       <ul className="grilla-hoteles">
-        {hoteles.length > 0 ? (
-          hoteles.map((data) => (
+        {hotels.length > 0 ? (
+          hotels.map((data) => (
             <li key={data.id} className="lista-hoteles">
               <h2>{data.name}</h2>
               <p>{data.country}</p>
               <p>{data.state}</p>
               <p>{data.city}</p>
-              <p>Price per nigth: {data.price}</p>
+              <p>Precio por noche: {data.price}</p>
             
             </li>
           ))

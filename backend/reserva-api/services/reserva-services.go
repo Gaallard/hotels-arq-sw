@@ -17,6 +17,7 @@ type Repository interface {
 	InsertReserva(ctx context.Context, reserva dao.Reserva) (dao.Reserva, error)
 	UpdateReserva(ctx context.Context, reserva dao.Reserva) (dao.Reserva, error)
 	DeleteReserva(ctx context.Context, reserva dao.Reserva) error
+	GetMisReservasById(id int64) ([]dao.Reserva, error)
 }
 type Service struct {
 	mainRepo Repository
@@ -45,12 +46,35 @@ func (service Service) GetReservaById(ctx context.Context, id int64) (domain.Res
 
 }
 
+func (service Service) GetMisReservasById(ctx context.Context, id int64) (domain.Reserva, error) {
+	reservaDAO, err := service.mainRepo.GetMisReservasById(id)
+
+	if err != nil {
+		return domain.Reserva{}, fmt.Errorf("error getting hotel from repository: %v", err)
+	}
+
+	result := make([]domain.Hotel, 0)
+	for _, hotel := range reservaDAO {
+
+	}
+	return domain.Reserva{
+		ID:     reservaDAO.ID,
+		User:   int64(reservaDAO.User),
+		Hotel:  reservaDAO.Hotel,
+		Noches: int64(reservaDAO.Noches),
+		Estado: int64(reservaDAO.Estado),
+	}, nil
+
+}
+
 func (service Service) InsertReserva(ctx context.Context, reserva domain.Reserva) (domain.Reserva, error) {
 	var Reserva dao.Reserva
 	Reserva.User = int(reserva.User)
 	Reserva.Noches = int(reserva.Noches)
 	Reserva.Hotel = reserva.Hotel
 	Reserva.Estado = int(reserva.Estado)
+	println("Recibe user: ", int(reserva.User))
+	println("Recibe hotel: ", reserva.Hotel)
 
 	//comprobamos existencia del hotel en Mongo llamando a hotels-api
 	urlHotel := fmt.Sprintf("http://localhost:8081/hotels/%s ", reserva.Hotel)

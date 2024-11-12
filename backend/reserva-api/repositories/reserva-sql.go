@@ -95,3 +95,17 @@ func (repository SQL) DeleteReseva(ctx context.Context, reserva dao.Reserva) err
 	}
 	return nil
 }
+
+func (repository SQL) GetMisReservasById(id int64) ([]dao.Reserva, error) {
+	var buscado []dao.Reserva
+	log.Println("ID: ", id)
+	result := repository.db.Where("ID = ?", id).Find(&buscado)
+	log.Println("resultado: ", result)
+	if result.Error != nil {
+		if gorm.IsRecordNotFoundError(result.Error) {
+			return []dao.Reserva{}, fmt.Errorf("no reservation found with ID: %d", id)
+		}
+		return []dao.Reserva{}, fmt.Errorf("error finding document: %v", result.Error)
+	}
+	return buscado, nil
+}

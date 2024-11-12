@@ -41,6 +41,7 @@ const closeAddDialog = () => {
   const [amenities, setAmenities] = useState([]); 
   const [rating, setRating] = useState(''); 
   const [price, setPrice] = useState(''); 
+  const [idhotel, setId] = useState(''); 
   const [available_rooms, setAvailableRooms] = useState('');
 
   useEffect(() => {
@@ -96,13 +97,6 @@ const closeAddDialog = () => {
     }
 };
 
-
-const handleUpdateHotel = (hotelId) => {
-  const hotel = hotels.find((h) => h.id === hotelId);
-  setSelectedHotel(hotel || null);  // Asigna el hotel seleccionado para edición
-  setShowEditDialog(true);           // Muestra el modal de edición
-};
-
 const handleUpdateHotelSubmit = async (e) => {
   e.preventDefault();
 
@@ -121,8 +115,9 @@ const handleUpdateHotelSubmit = async (e) => {
   };
 
   try {
-    const updatedHotel = await updateHotel(selectedHotel.id, hotelData);
-    setHotels(hotels.map((hotel) => hotel.id === selectedHotel.id ? updatedHotel : hotel));
+    console.log("id hotel seleccionado: ", selectedHotel._id)
+    const updatedHotel = await updateHotel(selectedHotel._id, hotelData);
+    setHotels(hotels.map((hotel) => hotel._id === selectedHotel._id ? updatedHotel : hotel));
     setMensaje('Hotel actualizado con éxito');
     setShowEditDialog(false); // Cierra el modal
   } catch (error) {
@@ -131,8 +126,8 @@ const handleUpdateHotelSubmit = async (e) => {
   }
 };
 
-  const handleReserva = async (hotelName) => {
-    const reservaData = { hotel_name: hotelName, user_id: await tokenId() };  // Define los datos de la reserva
+  const handleReserva = async (hotelId, hotelName) => {
+    const reservaData = { hotel_id: hotelId, hotel_name: hotelName, user_id: await tokenId() };  // Define los datos de la reserva
     try {
       const newReserva = await reserva(reservaData);  // Llama a la función `reserva` pasando los datos
       setReservas((reservas) => [...reservas, newReserva]);  // Actualiza el estado de reservas con la nueva reserva
@@ -180,21 +175,23 @@ const handleUpdateHotelSubmit = async (e) => {
         <p>{data.city}</p>
         <div className="amenities">
           <h3>Amenidades:</h3>
+          
           <ul className="Lista-amenities">
-            {data.amenities.map((amenity, index) => (
+            {(data.amenities || []).map((amenity, index) => (
               <li key={`${data.id}-${index}`} className="amenities">
                 {amenity === 'WiFi' && <FaWifi />}
                 {amenity === 'Cafe' && <FaCoffee />}
                 {amenity === 'Pileta' && <FaSwimmingPool />}
-                {amenity === 'Gimnasio' && <CgGym  />}
+                {amenity === 'Gimnasio' && <CgGym />}
                 {amenity === 'Estacionamiento' && <FaParking />}
-                {` ${amenity}`}
+                {`${amenity}`}
               </li>
-            ))}
+            ))}
           </ul>
+
         </div>
         <div className="boton-reserva">
-          <button onClick={() => reserva(data)}>Reservar</button>
+          <button onClick={() => handleReserva(data._id, data.name)}>Reservar</button>
         </div>
         {isAdmin && (
           <button className="boton-editar" onClick={() => openEditDialog(data)}>
@@ -231,7 +228,7 @@ const handleUpdateHotelSubmit = async (e) => {
 
       {showEditDialog && selectedHotel && (
         <div className="modal">
-          <form onSubmit={handleUpdateHotel}>
+          <form onSubmit={handleUpdateHotelSubmit}>
             <div className="modal-content">
               <h2>Editar Hotel</h2>
               <input type="text" value={name} onChange={(e) => setName(e.target.value)} placeholder="Nombre del Hotel" />
@@ -244,7 +241,7 @@ const handleUpdateHotelSubmit = async (e) => {
               <input type="text" value={price} onChange={(e) => setPrice(e.target.value)} placeholder="Precio" />
               <input type="number" value={available_rooms} onChange={(e) => setAvailableRooms(e.target.value)} placeholder="Habitaciones Disponibles" />
               <button onClick={closeEditDialog}>Cancelar</button>
-              <button onClick={handleUpdateHotel}>confirmar</button>
+              <button onClick={handleUpdateHotelSubmit}>confirmar</button>
             </div>
           </form>
         </div>
