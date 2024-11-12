@@ -56,7 +56,7 @@ export async function updateHotel(hotelId, Data) {
 export async function getAllHotels() {
   return axios.get("http://localhost:8081/hotels")
   .then(function (response) {
-    return response.data.results;
+    return response.data;
   })
   .catch(function (error) {
     console.error("error en la carga de los hoteles: ", error);
