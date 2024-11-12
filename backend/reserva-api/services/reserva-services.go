@@ -1,6 +1,7 @@
 package reservas
 
 import (
+	"bytes"
 	"context"
 	"encoding/json"
 	"fmt"
@@ -90,6 +91,33 @@ func (service Service) InsertReserva(ctx context.Context, reserva domain.Reserva
 		}*/
 
 	if hotel.Available_rooms > 0 {
+
+		hotel.Available_rooms = hotel.Available_rooms - 1
+		hotelSend, err := json.Marshal(hotel)
+
+		if err != nil {
+			return domain.Reserva{}, fmt.Errorf("error to marshal: %v", err)
+		}
+
+		urlHotel := fmt.Sprintf("http://localhost:8081/hotels/%s ", hotel.Id)
+		response, err := http.NewRequest(http.MethodPut, urlHotel, bytes.NewBuffer(hotelSend))
+
+		if err != nil {
+			return domain.Reserva{}, fmt.Errorf("error getting hotel from server: %v", err)
+		}
+
+		client := &http.Client{}
+		resp, err := client.Do(response)
+		if err != nil {
+			return domain.Reserva{}, fmt.Errorf("error al enviar la solicitud PUT: %w", err)
+		}
+		defer resp.Body.Close()
+
+		// Verificar si la respuesta fue exitosa
+		if resp.StatusCode != http.StatusOK {
+			return domain.Reserva{}, fmt.Errorf("error en la respuesta del servidor, código de estado: %d", resp.StatusCode)
+		}
+
 		reservaDomain, err := service.mainRepo.InsertReserva(ctx, Reserva)
 		if err != nil {
 
