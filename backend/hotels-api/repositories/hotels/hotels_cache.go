@@ -8,6 +8,8 @@ import (
 
 	"github.com/karlseguin/ccache"
 	_ "github.com/karlseguin/ccache"
+	"go.mongodb.org/mongo-driver/bson"
+	"go.mongodb.org/mongo-driver/bson/primitive"
 )
 
 const (
@@ -105,5 +107,20 @@ func (repository Cache) UpdateHotel(ctx context.Context, id string, hotel hotels
 
 	repository.client.Set(key, currentHotel, repository.duration)
 
+	return nil
+}
+
+func (repository Mongo) DeleteHotel(ctx context.Context, id string) error {
+	// Get from MongoDB
+	objectID, err := primitive.ObjectIDFromHex(id)
+	if err != nil {
+		return fmt.Errorf("error converting id to mongo ID: %w", err)
+	}
+	result, err := repository.client.Database(repository.database).Collection(repository.collection).DeleteOne(ctx, bson.M{"_id": objectID})
+	if err != nil {
+		return fmt.Errorf("error finding/deleting document: %w", err)
+	}
+
+	println(result)
 	return nil
 }

@@ -18,4 +18,5 @@ type Hotel struct {
 	Amenities       []string `json:"amenities"`
 	Price           float64  `json:"price"`
 	Available_rooms int64    `json:"available_rooms"`
+	Noches          int64    `json:"noches"`
 }

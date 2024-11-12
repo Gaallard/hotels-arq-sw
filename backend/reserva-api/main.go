@@ -13,6 +13,7 @@ type Controller interface {
 	GetReservaByID(ctx *gin.Context)
 	updateReserva(ctx *gin.Context)
 	InsertReserva(ctx *gin.Context)
+	GetMisReservasById(ctx *gin.Context)
 }
 
 func main() {
@@ -43,6 +44,8 @@ func main() {
 	})
 
 	router.GET("/reservas/:id", Controller.GetReservaById)
+	router.GET("/mis-reservas/:id", Controller.GetMisReservasById)
+
 	router.POST("/reservas/", Controller.InsertReserva)
 	router.PUT("/reservas/", Controller.UpdateReserva)
 	router.DELETE("/reservas/", Controller.DeleteReserva)

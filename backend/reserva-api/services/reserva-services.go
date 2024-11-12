@@ -16,7 +16,7 @@ type Repository interface {
 	GetReservaById(id int64) (dao.Reserva, error)
 	InsertReserva(ctx context.Context, reserva dao.Reserva) (dao.Reserva, error)
 	UpdateReserva(ctx context.Context, reserva dao.Reserva) (dao.Reserva, error)
-	DeleteReserva(ctx context.Context, reserva dao.Reserva) error
+	DeleteReserva(id int64) error
 	GetMisReservasById(id int64) ([]dao.Reserva, error)
 }
 type Service struct {
@@ -46,24 +46,41 @@ func (service Service) GetReservaById(ctx context.Context, id int64) (domain.Res
 
 }
 
-func (service Service) GetMisReservasById(ctx context.Context, id int64) (domain.Reserva, error) {
+func (service Service) GetMisReservasById(ctx context.Context, id int64) ([]domain.Hotel, error) {
 	reservaDAO, err := service.mainRepo.GetMisReservasById(id)
 
 	if err != nil {
-		return domain.Reserva{}, fmt.Errorf("error getting hotel from repository: %v", err)
+		return []domain.Hotel{}, fmt.Errorf("error getting hotel from repository: %v", err)
 	}
 
 	result := make([]domain.Hotel, 0)
 	for _, hotel := range reservaDAO {
+		if hotel.Estado == 1 {
+			urlHotel := fmt.Sprintf("http://localhost:8081/hotels/%s ", hotel.Hotel)
+			response, err := http.Get(urlHotel)
 
+			if err != nil {
+				return []domain.Hotel{}, fmt.Errorf("error getting hotel from server: %v", err)
+			}
+			if response.StatusCode != http.StatusOK {
+				return []domain.Hotel{}, fmt.Errorf("Unexpected error with status code: %d", response.Status)
+			}
+
+			body, err := ioutil.ReadAll(response.Body)
+			if err != nil {
+				log.Fatal("Error al ller el body de hotel", err)
+			}
+			var hotelBuscado domain.Hotel
+			err = json.Unmarshal(body, &hotelBuscado)
+			result = append(result, domain.Hotel{
+				Name:   hotelBuscado.Name,
+				Noches: int64(hotel.Noches),
+			})
+		} else {
+			continue
+		}
 	}
-	return domain.Reserva{
-		ID:     reservaDAO.ID,
-		User:   int64(reservaDAO.User),
-		Hotel:  reservaDAO.Hotel,
-		Noches: int64(reservaDAO.Noches),
-		Estado: int64(reservaDAO.Estado),
-	}, nil
+	return result, nil
 
 }
 
@@ -99,20 +116,6 @@ func (service Service) InsertReserva(ctx context.Context, reserva domain.Reserva
 	if err != nil {
 		log.Fatal("error al cargar el hotel para reservas: ", err)
 	}
-
-	//comprobamos existencia de usuario llamando a users-api
-	/*
-		urlUser := fmt.Sprintf("http://localhost:8080/users/%s ", reserva.User)
-		response, err = http.Get(urlUser)
-		if err != nil {
-			return domain.Reserva{}, fmt.Errorf("error getting user from server: %v", err)
-		}
-		if response.StatusCode != http.StatusOK {
-			return domain.Reserva{}, fmt.Errorf("Unexpected error with status code: %d", response.Status)
-		}
-		if response.StatusCode == http.StatusNotFound {
-			return domain.Reserva{}, fmt.Errorf("user not found with ID: %s", reserva.User)
-		}*/
 
 	if hotel.Available_rooms > 0 {
 
@@ -181,8 +184,8 @@ func (service Service) DeleteReserva(ctx context.Context, reserva domain.Reserva
 		Hotel:  reserva.Hotel,
 		Estado: int(reserva.Estado),
 	}
-
-	err := service.mainRepo.DeleteReserva(ctx, daoReserva)
+	println("service: ", daoReserva.ID)
+	err := service.mainRepo.DeleteReserva(daoReserva.ID)
 	if err != nil {
 		return fmt.Errorf("Error eliminando reserva service", reserva.ID, err)
 	}

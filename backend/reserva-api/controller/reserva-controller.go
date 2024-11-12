@@ -16,6 +16,7 @@ type Service interface {
 	InsertReserva(ctx context.Context, reserva Domain.Reserva) (Domain.Reserva, error)
 	UpdateReserva(ctx context.Context, reserva Domain.Reserva) (Domain.Reserva, error)
 	DeleteReserva(ctx context.Context, reserva Domain.Reserva) error
+	GetMisReservasById(ctx context.Context, id int64) ([]Domain.Hotel, error)
 }
 
 type Controller struct {
@@ -41,6 +42,30 @@ func (controller Controller) GetReservaById(ctx *gin.Context) {
 
 	// Get hotel by ID using the service
 	reserva, err := controller.service.GetReservaById(ctx.Request.Context(), id)
+	if err != nil {
+		ctx.JSON(http.StatusInternalServerError, gin.H{
+			"error": fmt.Sprintf("error getting hotel: %s", err.Error()),
+		})
+		return
+	}
+
+	// Send response
+	ctx.JSON(http.StatusOK, reserva)
+}
+
+func (controller Controller) GetMisReservasById(ctx *gin.Context) {
+	// Validate ID param
+	idParam := strings.TrimSpace(ctx.Param("id"))
+	id, err := strconv.ParseInt(idParam, 10, 64)
+	if err != nil {
+		ctx.JSON(http.StatusBadRequest, gin.H{
+			"error": fmt.Sprintf("invalid id: %s", idParam),
+		})
+		return
+	}
+
+	// Get hotel by ID using the service
+	reserva, err := controller.service.GetMisReservasById(ctx.Request.Context(), id)
 	if err != nil {
 		ctx.JSON(http.StatusInternalServerError, gin.H{
 			"error": fmt.Sprintf("error getting hotel: %s", err.Error()),

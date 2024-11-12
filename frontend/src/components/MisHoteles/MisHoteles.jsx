@@ -3,15 +3,22 @@ import { Link } from 'react-router-dom';
 import './MisHoteles.css';
 import { FaHome } from 'react-icons/fa';
 import { useNavigate } from 'react-router-dom';
-import { updateReserva, deleteReserva,tokenId } from '../../utils/Acciones';
+import { updateReserva, deleteReserva,tokenId, getreservas } from '../../utils/Acciones';
 
 const MisHoteles = () => {
   const [hotels, setMyHotels] = useState([]);
   const [valorID,setID] = useState('');
-  const val = async() =>{
-      const val1 = await tokenId();
-      setID(val1);
-  }; 
+  useEffect(() => {
+    const obtenerTokenId = async () => {
+      try {
+        const val1 = await tokenId();
+        setID(val1);
+      } catch (error) {
+        console.error('Error al obtener tokenId:', error);
+      }
+    };
+    obtenerTokenId();
+  }, []);
   const navigate = useNavigate();
 
   /*
@@ -39,20 +46,18 @@ const MisHoteles = () => {
     }
   }, [navigate]);*/
 
-  console.log("valor de val: ",valorID)
   useEffect(() => {
-      fetch(`http://localhost:8083/reserva/misreservas/${valorID}`, {
-          headers: {
-              'Authorization': `Bearer ${localStorage.getItem('token')}`
-          }
-      })
-      .then(response => response.json())
-          .then(data => setMyHotels(data.results))
-          .catch(error => {
-              console.error('Error fetching courses:', error.message);
-              console.error('Error details:', error.response);
-          });
-  },[valorID]);
+    const fetchHotels = async () => {
+      try {
+        const hotelsData = await getreservas();
+        console.log("Hoteles cargados:", hotelsData); // Verifica la estructura de los datos
+        setMyHotels(hotelsData.results || hotelsData); // Ajustwa según la estructura
+      } catch (error) {
+        console.error('Error fetching hotels:', error);
+      }
+    };
+    fetchHotels();
+  }, []);
 
   return (
     <div className="contenedor-misreservas">
@@ -67,11 +72,15 @@ const MisHoteles = () => {
           hotels.map((data) => (
             <li key={data.id} className="lista-hoteles">
               <h2>{data.name}</h2>
-              <p>{data.country}</p>
-              <p>{data.state}</p>
-              <p>{data.city}</p>
-              <p>Precio por noche: {data.price}</p>
-            
+              <h4>{data.noches}</h4> 
+              <div className="boton-container">
+                <button className="boton-actualizar">
+                  Actualizar
+                </button>
+                <button className="boton-eliminar">
+                  Eliminar
+                </button>
+              </div>           
             </li>
           ))
         ) : (
@@ -83,3 +92,6 @@ const MisHoteles = () => {
 };
 
 export default MisHoteles;
+
+//onClick={() => handleUpdateReserva(data.id)}
+//  onClick={() => handleDeleteReserva(data.id)}

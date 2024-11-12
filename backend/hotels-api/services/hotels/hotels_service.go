@@ -14,6 +14,7 @@ type Repository interface {
 	InsertHotel(ctx context.Context, hotel hotels.Hotel) (string, error)
 	UpdateHotel(ctx context.Context, id string, hotel hotels.Hotel) error
 	GetAllHotels(ctx context.Context) ([]hotels.Hotel, error)
+	DeleteHotel(ctx context.Context, id string) error
 }
 
 type RabbitMQ interface {
@@ -197,4 +198,35 @@ func (service Service) UpdateHotel(ctx context.Context, id string, hotel hotelsD
 	}
 
 	return nil
+}
+
+func (service Service) DeleteHotel(ctx context.Context, id string) (hotelsDomain.Hotel, error) {
+	println("recibimos2: ", id)
+
+	hotelDAO, err := service.cacheRepository.GetHotelByID(ctx, id)
+	if err != nil {
+		// Get hotel from main repository
+		hotelDAO, err = service.mainRepository.GetHotelByID(ctx, id)
+		if err != nil {
+			return hotelsDomain.Hotel{}, fmt.Errorf("error getting hotel from repository: %v", err)
+		}
+
+		if _, err := service.cacheRepository.InsertHotel(ctx, hotelDAO); err != nil {
+			return hotelsDomain.Hotel{}, fmt.Errorf("error creating hotel in cache: %w", err)
+		}
+	}
+	// prueba que envia mensaje, cambiar dsp en funciones utiles
+	//service.rabbitRpo.Publish(id)
+	// Convert DAO to DTO
+	return hotelsDomain.Hotel{
+		Id:              hotelDAO.Id,
+		Name:            hotelDAO.Name,
+		Address:         hotelDAO.Address,
+		City:            hotelDAO.City,
+		State:           hotelDAO.State,
+		Rating:          hotelDAO.Rating,
+		Amenities:       hotelDAO.Amenities,
+		Price:           hotelDAO.Price,
+		Available_rooms: hotelDAO.Available_rooms,
+	}, nil
 }

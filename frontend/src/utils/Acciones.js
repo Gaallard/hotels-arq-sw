@@ -56,11 +56,23 @@ export async function updateHotel(hotelId, { name, address, country, city, state
   }
 }
 
-
-// Obtiene todos los hoteles
 export async function getAllHotels() {
   try {
     const response = await axios.get('http://localhost:8081/hotels', {
+      headers: { 'Authorization': `Bearer ${authToken}` }
+    });
+    console.log('Hoteles cargados:', response.data);
+    return response.data;
+  } catch (error) {
+    console.error('Error al obtener los hoteles:', error.response ? error.response.data : error.message);
+    throw error;
+  }
+}
+
+export async function getreservas() {
+  try {
+    const valorID = await tokenId();
+    const response = await axios.get(`http://localhost:8083/mis-reservas/${valorID}`, {
       headers: { 'Authorization': `Bearer ${authToken}` }
     });
     console.log('Hoteles cargados:', response.data);
@@ -89,6 +101,7 @@ export async function reserva(Data){
   const data = {
     "user_id": token,
     "hotel_id": Data.hotel_id,
+    "noches": Data.noches
   }
   console.log("data id: ",data)
   
@@ -109,7 +122,7 @@ export async function updateReserva(Data){
     const token = await tokenId();
     const data = {
       "user_id": token,
-      "hotel_id": Data.id,
+      "hotel_id": Data.hotel_id,
     }
     console.log("data id: ",data)
     return axios.put('http://localhost:8083/reservas',data, {
@@ -129,7 +142,7 @@ export async function updateReserva(Data){
     const token = await tokenId();
     const data = {
       "user_id": token,
-      "hotel_id": Data.id,
+      "hotel_id": Data.hotel_id,
     }
     console.log("data id: ",data)
     return axios.delete('http://localhost:8083/reservas',data, {

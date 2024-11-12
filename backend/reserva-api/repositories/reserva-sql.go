@@ -23,9 +23,6 @@ type SQL struct {
 }
 
 // DeleteReserva implements reservas.Repository.
-func (repository SQL) DeleteReserva(ctx context.Context, reserva dao.Reserva) error {
-	panic("unimplemented")
-}
 
 func NewSql(config SQLConfig) SQL {
 	db, err := gorm.Open("mysql", config.User+":"+config.Pass+"@tcp("+config.Host+":3306)/"+config.Name+"?charset=utf8&parseTime=True")
@@ -81,16 +78,17 @@ func (repository SQL) UpdateReserva(ctx context.Context, reserva dao.Reserva) (d
 	return result, nil
 }
 
-func (repository SQL) DeleteReseva(ctx context.Context, reserva dao.Reserva) error {
-	result, err := repository.GetReservaById(reserva.ID)
-	log.Println("ID: ", reserva.ID)
+func (repository SQL) DeleteReserva(id int64) error {
+	println("ID: ", id)
+
+	result, err := repository.GetReservaById(id)
 	if err != nil {
-		log.Panic("Error reversa no exists")
+		println("Error reversa no exists")
 		return fmt.Errorf("error reserva doesnt exists:")
 	}
-	resul := repository.db.Model(&result).Delete(reserva)
+	resul := repository.db.Delete(&result)
 	if resul.Error != nil {
-		log.Panic("Error deleting the hotel")
+		println("Error deleting the hotel")
 		return fmt.Errorf("error deleting document:")
 	}
 	return nil
@@ -99,7 +97,7 @@ func (repository SQL) DeleteReseva(ctx context.Context, reserva dao.Reserva) err
 func (repository SQL) GetMisReservasById(id int64) ([]dao.Reserva, error) {
 	var buscado []dao.Reserva
 	log.Println("ID: ", id)
-	result := repository.db.Where("ID = ?", id).Find(&buscado)
+	result := repository.db.Where("user = ?", id).Find(&buscado)
 	log.Println("resultado: ", result)
 	if result.Error != nil {
 		if gorm.IsRecordNotFoundError(result.Error) {
