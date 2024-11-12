@@ -2,9 +2,14 @@ package search
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
+	"io/ioutil"
+	"log"
+	"net/http"
 	hotelsDAO "search-api/dao"
 	hotelsDomain "search-api/domain"
+	"sync"
 )
 
 type Repository interface {
@@ -31,30 +36,98 @@ func NewService(repository Repository, hotelsAPI ExternalRepository) Service {
 }
 
 func (service Service) Search(ctx context.Context, query string, offset int, limit int) ([]hotelsDomain.Hotel, error) {
-	// Call the repository's Search method
+	// Llamar al método Search del repositorio
 	hotelsDAOList, err := service.repository.Search(ctx, query, limit, offset)
 	if err != nil {
 		return nil, fmt.Errorf("error searching hotels: %w", err)
 	}
 
-	// Convert the dao layer hotels to domain layer hotels
-	hotelsDomainList := make([]hotelsDomain.Hotel, 0)
-	for _, hotel := range hotelsDAOList {
-		hotelsDomainList = append(hotelsDomainList, hotelsDomain.Hotel{
-			Id:              hotel.Id,
-			Name:            hotel.Name,
-			Address:         hotel.Address,
-			City:            hotel.City,
-			State:           hotel.State,
-			Rating:          hotel.Rating,
-			Amenities:       hotel.Amenities,
-			Price:           hotel.Price,
-			Available_rooms: hotel.Available_rooms,
+	result := make([]hotelsDomain.Hotel, 0)
+	for _, hotels := range hotelsDAOList {
+		println("Id buscado2: ", hotels.Id)
+		result = append(result, hotelsDomain.Hotel{
+			Id:              hotels.Id,
+			Name:            hotels.Name,
+			Address:         hotels.Address,
+			City:            hotels.City,
+			State:           hotels.State,
+			Rating:          hotels.Rating,
+			Amenities:       hotels.Amenities,
+			Price:           hotels.Price,
+			Available_rooms: hotels.Available_rooms,
 		})
+	}
+
+	// Canal para recolectar resultados
+	hotelsChannel := make(chan hotelsDomain.Hotel, len(result))
+	var group sync.WaitGroup
+
+	for _, hotel := range result {
+		group.Add(1)
+		go func(hotelID string) {
+			defer group.Done()
+
+			urlHotel := fmt.Sprintf("http://localhost:8081/hotels/%s", hotelID)
+			response, err := http.Get(urlHotel)
+			if err != nil {
+				log.Printf("Error fetching hotel (%s): %v\n", hotelID, err)
+				return
+			}
+			defer response.Body.Close()
+
+			body, err := ioutil.ReadAll(response.Body)
+			if err != nil {
+				log.Printf("Error reading body for hotel (%s): %v\n", hotelID, err)
+				return
+			}
+
+			var hotel hotelsDomain.Hotel
+			err = json.Unmarshal(body, &hotel)
+			if err != nil {
+				log.Printf("Error unmarshalling hotel (%s): %v\n", hotelID, err)
+				return
+			}
+
+			if hotel.Available_rooms > 0 {
+				hotelsChannel <- hotel
+			}
+		}(hotel.Id)
+	}
+
+	// Esperar a que todas las goroutines terminen
+	go func() {
+		group.Wait()
+		close(hotelsChannel)
+	}()
+
+	// Recolectar resultados del canal
+	hotelsDomainList := make([]hotelsDomain.Hotel, 0)
+	for hotel := range hotelsChannel {
+		hotelsDomainList = append(hotelsDomainList, hotel)
 	}
 
 	return hotelsDomainList, nil
 }
+
+/*
+func (service Service) GetHotelRooms(ctx context.Context, hotelID string, group *sync.WaitGroup, ch chan hotelsDomain.Hotel) {
+	defer group.Done()
+
+	urlHotel := fmt.Sprintf("http://localhost:8081/hotels/%s ", hotelID)
+	response, err := http.Get(urlHotel)
+	defer response.Body.Close()
+	body, err := ioutil.ReadAll(response.Body)
+	if err != nil {
+		log.Fatal("Error al ller el body de hotel", err)
+	}
+	var hotel hotelsDomain.Hotel
+	err = json.Unmarshal(body, &hotel)
+	if err != nil {
+		log.Fatal("error al cargar el hotel para reservas: ", err)
+	}
+
+	ch <- hotel
+}*/
 
 func (service Service) HandleHotelNew(hotelNew hotelsDomain.HotelNew) {
 	println("op: ", hotelNew.Operation)

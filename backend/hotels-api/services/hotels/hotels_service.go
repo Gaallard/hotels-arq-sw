@@ -7,7 +7,6 @@ import (
 	"hotels-api/dao/hotels"
 	hotelsDAO "hotels-api/dao/hotels"
 	hotelsDomain "hotels-api/domain/hotels"
-	"sync"
 )
 
 type Repository interface {
@@ -120,50 +119,16 @@ func (service Service) GetAllHotels(ctx context.Context) error {
 	return nil
 }
 
-func (service Service) GetHotelsAvailability(ctx context.Context) (map[string]int64, error) {
+func (service Service) GetHotelsAvailability(ctx context.Context, id string) (hotelsDomain.Hotel, error) {
 
-	hotelDAO, err := service.mainRepository.GetAllHotels(ctx)
+	hotelDAO, err := service.mainRepository.GetHotelByID(ctx, id)
 	if err != nil {
-		return nil, fmt.Errorf("error getting hotels: %w", err)
+		return hotelsDomain.Hotel{}, fmt.Errorf("no se encontro el hotel: ", err)
 	}
-
-	result := make(map[string]int64)
-
-	var waitGroup sync.WaitGroup
-	waitGroup.Add(len(hotelDAO))
-
-	ch := make(chan RoomAvailability)
-
-	go func() {
-		for roomAvailability := range ch {
-			if roomAvailability.AvailableRooms > 0 {
-				result[roomAvailability.HotelID] = roomAvailability.AvailableRooms
-			}
-		}
-	}()
-
-	for _, hotel := range hotelDAO {
-		go service.GetHotelRooms(ctx, hotel.Id, &waitGroup, ch)
-	}
-
-	waitGroup.Wait()
-	close(ch)
-
-	return result, nil
-}
-
-func (service Service) GetHotelRooms(ctx context.Context, hotelID string, group *sync.WaitGroup, ch chan RoomAvailability) {
-	defer group.Done()
-
-	hotel, err := service.mainRepository.GetHotelByID(ctx, hotelID)
-	if err != nil {
-		return
-	}
-
-	ch <- RoomAvailability{
-		HotelID:        hotel.Id,
-		AvailableRooms: hotel.Available_rooms,
-	}
+	return hotelsDomain.Hotel{
+		Id:              hotelDAO.Id,
+		Available_rooms: hotelDAO.Available_rooms,
+	}, nil
 }
 
 func (service Service) InsertHotel(ctx context.Context, hotel hotelsDomain.Hotel) (string, error) {

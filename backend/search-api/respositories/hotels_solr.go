@@ -194,7 +194,8 @@ func (searchEngine Solr) Search(ctx context.Context, query string, limit int, of
 
 		// Safely extract hotel fields with type assertions
 		hotel := dao.Hotel{
-			Id:              getStringField(doc, "_id"),
+
+			Id:              getStringField(doc, "id"),
 			Name:            getStringField(doc, "name"),
 			Address:         getStringField(doc, "address"),
 			City:            getStringField(doc, "city"),
