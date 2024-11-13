@@ -139,7 +139,6 @@ func (service Service) InsertReserva(ctx context.Context, reserva domain.Reserva
 		if err != nil {
 			return domain.Reserva{}, fmt.Errorf("error al enviar la solicitud PUT: %w", err)
 		}
-		defer resp.Body.Close()
 
 		// Verificar si la respuesta fue exitosa
 		if resp.StatusCode != http.StatusOK {
@@ -192,6 +191,51 @@ func (service Service) DeleteReserva(ctx context.Context, reserva domain.Reserva
 	err := service.mainRepo.DeleteReserva(ctx, daoReserva)
 	if err != nil {
 		return fmt.Errorf("Error eliminando reserva service", reserva.ID, err)
+	}
+
+	urlHotel := fmt.Sprintf("http://localhost:8081/hotels/%s ", reserva.Hotel)
+	response, err := http.Get(urlHotel)
+
+	if err != nil {
+		return fmt.Errorf("error getting hotel from server: %v", err)
+	}
+	if response.StatusCode != http.StatusOK {
+		return fmt.Errorf("Unexpected error with status code: %d", response.Status)
+	}
+	if response.StatusCode == http.StatusNotFound {
+		return fmt.Errorf("hotel not found with ID: %s", reserva.Hotel)
+	}
+
+	body, err := ioutil.ReadAll(response.Body)
+	if err != nil {
+		log.Fatal("Error al ller el body de hotel", err)
+	}
+	var hotel domain.Hotel
+	err = json.Unmarshal(body, &hotel)
+	if err != nil {
+		log.Fatal("error al cargar el hotel para reservas: ", err)
+	}
+
+	hotel.Available_rooms = hotel.Available_rooms + 1
+	hotelSend, err := json.Marshal(hotel)
+
+	if err != nil {
+		return fmt.Errorf("error to marshal: %v", err)
+	}
+
+	urlHotel = fmt.Sprintf("http://localhost:8081/hotels/%s ", hotel.Id)
+	response2, err := http.NewRequest(http.MethodPut, urlHotel, bytes.NewBuffer(hotelSend))
+	client := &http.Client{}
+	resp, err := client.Do(response2)
+	if err != nil {
+		return fmt.Errorf("error al enviar la solicitud PUT: %w", err)
+	}
+	if err != nil {
+		return fmt.Errorf("error to marshal: %v", err)
+	}
+
+	if resp.StatusCode != http.StatusOK {
+		return fmt.Errorf("error en la respuesta del servidor, código de estado: %d", resp.StatusCode)
 	}
 
 	return nil
