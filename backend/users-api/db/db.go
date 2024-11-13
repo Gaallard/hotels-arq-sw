@@ -3,6 +3,7 @@ package db
 import (
 	userClient "backend/clients/users"
 	Model "backend/model"
+	"os"
 
 	"github.com/jinzhu/gorm"
 	_ "github.com/jinzhu/gorm/dialects/mysql"
@@ -36,10 +37,10 @@ func init() {
 
 		userClient.Db = db*/
 
-	DBName := "users"
-	DBUser := "root"
-	DBPass := "root"
-	DBHost := "localhost"
+	DBName := os.Getenv("DB_NAME")
+	DBUser := os.Getenv("DB_USER")
+	DBPass := os.Getenv("DB_PASSWORD")
+	DBHost := os.Getenv("DB_HOST")
 
 	db, err = gorm.Open("mysql", DBUser+":"+DBPass+"@tcp("+DBHost+":3306)/"+DBName+"?charset=utf8&parseTime=True")
 

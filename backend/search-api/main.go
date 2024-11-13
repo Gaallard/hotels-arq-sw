@@ -14,14 +14,14 @@ import (
 func main() {
 	// Solr
 	solrRepo := repositories.NewSolr(repositories.SolrConfig{
-		Host:       "localhost", // Solr host
-		Port:       "8983",      // Solr port
-		Collection: "hotels",    // Collection name
+		Host:       "solr",   // Solr host
+		Port:       "8983",   // Solr port
+		Collection: "hotels", // Collection name
 	})
 
 	// Rabbit
 	eventsQueue := queues.NewRabbit(queues.RabbitConfig{
-		Host:      "localhost",
+		Host:      "rabbit",
 		Port:      "5672",
 		Username:  "guest",
 		Password:  "guest",
@@ -30,8 +30,8 @@ func main() {
 
 	// Hotels API
 	hotelsAPI := repositories.NewHTTP(repositories.HTTPConfig{
-		Host: "localhost",
-		Port: "8080",
+		Host: "hotels-api",
+		Port: "8081",
 	})
 
 	// Services
@@ -63,7 +63,7 @@ func main() {
 	})
 
 	router.GET("/search", controller.Search)
-	if err := router.Run(":8083"); err != nil {
+	if err := router.Run(":8084"); err != nil {
 		log.Fatalf("Error running application: %v", err)
 	}
 }

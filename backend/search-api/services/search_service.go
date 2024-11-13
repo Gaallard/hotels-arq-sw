@@ -58,7 +58,6 @@ func (service Service) Search(ctx context.Context, query string, offset int, lim
 		})
 	}
 
-	// Canal para recolectar resultados
 	hotelsChannel := make(chan hotelsDomain.Hotel, len(result))
 	var group sync.WaitGroup
 
@@ -67,7 +66,7 @@ func (service Service) Search(ctx context.Context, query string, offset int, lim
 		go func(hotelID string) {
 			defer group.Done()
 
-			urlHotel := fmt.Sprintf("http://localhost:8081/hotels/%s", hotelID)
+			urlHotel := fmt.Sprintf("http://hotels-api:8081/hotels/%s", hotelID)
 			response, err := http.Get(urlHotel)
 			if err != nil {
 				log.Printf("Error fetching hotel (%s): %v\n", hotelID, err)
@@ -94,13 +93,11 @@ func (service Service) Search(ctx context.Context, query string, offset int, lim
 		}(hotel.Id)
 	}
 
-	// Esperar a que todas las goroutines terminen
 	go func() {
 		group.Wait()
 		close(hotelsChannel)
 	}()
 
-	// Recolectar resultados del canal
 	hotelsDomainList := make([]hotelsDomain.Hotel, 0)
 	for hotel := range hotelsChannel {
 		hotelsDomainList = append(hotelsDomainList, hotel)

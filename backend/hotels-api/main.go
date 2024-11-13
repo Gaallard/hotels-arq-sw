@@ -37,7 +37,7 @@ func main() {
 
 	//username y password de tomi: root / root
 	mongoConfig := hotelsRepository.MongoConfig{
-		Host:       "localhost",
+		Host:       "mongo",
 		Port:       "27017",
 		Username:   "root", //fran:
 		Password:   "root", //fran:
@@ -45,7 +45,7 @@ func main() {
 		Collection: "hotels",
 	}
 
-	HostR := "localhost"
+	HostR := "rabbit"
 	PortR := "5672"
 	UsernameR := "guest"
 	PasswordR := "guest"
@@ -75,7 +75,7 @@ func main() {
 	router.PUT("/hotels/:id", controller.UpdateHotel)
 
 	log.Println("Servidor corriendo en http://localhost:8080")
-	if err := router.Run(":8080"); err != nil {
+	if err := router.Run(":8081"); err != nil {
 		log.Fatalf("Error al iniciar el servidor: %v", err)
 	}
 

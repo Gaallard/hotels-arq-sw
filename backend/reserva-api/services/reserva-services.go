@@ -56,7 +56,7 @@ func (service Service) GetMisReservasById(ctx context.Context, id int64) ([]doma
 	result := make([]domain.Hotel, 0)
 	for _, hotel := range reservaDAO {
 		if hotel.Estado == 1 {
-			urlHotel := fmt.Sprintf("http://localhost:8081/hotels/%s ", hotel.Hotel)
+			urlHotel := fmt.Sprintf("http://hotels-api:8081/hotels/%s ", hotel.Hotel)
 			response, err := http.Get(urlHotel)
 
 			if err != nil {
@@ -95,7 +95,7 @@ func (service Service) InsertReserva(ctx context.Context, reserva domain.Reserva
 	println("Recibe hotel: ", reserva.Hotel)
 
 	//comprobamos existencia del hotel en Mongo llamando a hotels-api
-	urlHotel := fmt.Sprintf("http://localhost:8081/hotels/%s ", reserva.Hotel)
+	urlHotel := fmt.Sprintf("http://hotels-api:8081/hotels/%s ", reserva.Hotel)
 	response, err := http.Get(urlHotel)
 
 	if err != nil {
@@ -127,7 +127,7 @@ func (service Service) InsertReserva(ctx context.Context, reserva domain.Reserva
 			return domain.Reserva{}, fmt.Errorf("error to marshal: %v", err)
 		}
 
-		urlHotel := fmt.Sprintf("http://localhost:8081/hotels/%s ", hotel.Id)
+		urlHotel := fmt.Sprintf("http://hotels-api:8081/hotels/%s ", hotel.Id)
 		response, err := http.NewRequest(http.MethodPut, urlHotel, bytes.NewBuffer(hotelSend))
 
 		if err != nil {
@@ -193,7 +193,7 @@ func (service Service) DeleteReserva(ctx context.Context, reserva domain.Reserva
 		return fmt.Errorf("Error eliminando reserva service", reserva.ID, err)
 	}
 
-	urlHotel := fmt.Sprintf("http://localhost:8081/hotels/%s ", reserva.Hotel)
+	urlHotel := fmt.Sprintf("http://hotels-api:8081/hotels/%s ", reserva.Hotel)
 	response, err := http.Get(urlHotel)
 
 	if err != nil {
@@ -223,7 +223,7 @@ func (service Service) DeleteReserva(ctx context.Context, reserva domain.Reserva
 		return fmt.Errorf("error to marshal: %v", err)
 	}
 
-	urlHotel = fmt.Sprintf("http://localhost:8081/hotels/%s ", hotel.Id)
+	urlHotel = fmt.Sprintf("http://hotels-api:8081/hotels/%s ", hotel.Id)
 	response2, err := http.NewRequest(http.MethodPut, urlHotel, bytes.NewBuffer(hotelSend))
 	client := &http.Client{}
 	resp, err := client.Do(response2)

@@ -13,7 +13,7 @@ COPY . .
 RUN go build -o app ./main.go
 
 # Expose the port on which the app will run
-EXPOSE 8083
+EXPOSE 8084
 
 # Command to run the binary
 CMD ["./app"]
