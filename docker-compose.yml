@@ -1,176 +1,133 @@
-
 services:
+  mysql:
+    image: mysql:latest
+    container_name: mysql-container
+    ports:
+      - "3306:3306"
+    environment:
+      MYSQL_ROOT_PASSWORD: root
+      MYSQL_DATABASE: users
+      MYSQL_PASSWORD: root
+    networks:
+      - app-network
+
+  memcached:
+    image: memcached:latest
+    container_name: memcached-container
+    ports:
+      - "11211:11211"
+    networks:
+      - app-network
+
   mongo:
-    image: mongo:latest
-    container_name: my-mongo-2
-    restart: always
+    image: mongo:4
+    container_name: mongo
+    ports:
+      - "27017:27017"
     environment:
       MONGO_INITDB_ROOT_USERNAME: root
       MONGO_INITDB_ROOT_PASSWORD: root
-      MONGO_INITDB_DATABASE: hotels
+    networks:
+      - app-network
+
+  rabbitmq:
+    image: rabbitmq:4-management
+    container_name: rabbit
     ports:
-      - "27017:27017"
-    volumes:
-      - ./backend/db_data:/data/db
-    healthcheck:
-      test: ["CMD", "mongo", "--host", "localhost", "--eval", "db.runCommand({ ping: 1 })"]
-      interval: 30s
-      timeout: 10s
-      retries: 5
-      start_period: 10s
-
-
-  memcached:
-    container_name: cache
-    image: memcached:1.6.16
-    ports:
-      - "11211:11211"
-    healthcheck:
-      test: ["CMD", "memcached", "-h"]
-      interval: 10s
-      retries: 5
-      start_period: 10s
-      timeout: 5s
-
-
-  rabbit:
-    container_name: rabbit-mq-2
-    image: rabbitmq
-    environment:
-      RABBITMQ_DEFAULT_USER: guest
-      RABBITMQ_DEFAULT_PASS: guest
-    ports:
-      - "15672:15672"
       - "5672:5672"
-    healthcheck:
-      test: [ "CMD", "rabbitmq-diagnostics", "status" ]
-      interval: 10s
-      timeout: 5s
-      retries: 5
-      start_period: 10s
+      - "15672:15672"
+    environment:
+      RABBITMQ_DEFAULT_USER: root
+      RABBITMQ_DEFAULT_PASS: root
+    networks:
+      - app-network
 
   solr:
+    image: solr:latest
     container_name: solr
-    image: solr
     ports:
       - "8983:8983"
-    environment:
-      - SOLR_CORE=hotels
     volumes:
-      - ./backend/search-api/solr-config:/opt/solr/server/solr/configsets/hotels
-    entrypoint:
-      - docker-entrypoint.sh
-      - solr-precreate
-      - hotels
-    healthcheck:
-      test: [ "CMD-SHELL", "curl -f http://localhost:8983/solr/admin/cores?action=STATUS&core=hotels" ]
-      interval: 30s
-      timeout: 10s
-      retries: 3
-      start_period: 10s
-
-  mysql:
-    image: mysql
-    container_name: mysql
-    restart: always
-    environment:
-      MYSQL_ROOT_USER: root
-      MYSQL_ROOT_PASSWORD: Tomihuspenina2003
-      MYSQL_DATABASE: reservas
-    ports:
-      - "3307:3306"
-    healthcheck:
-      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "root", "--password=Tomihuspenina2003"]
-      interval: 20s  
-      timeout: 10s
-      retries: 5
-      start_period: 30s  
-    volumes:
-      - ./db_data:/var/lib/mysql
-
-  hotels-api:
-    build:
-      context: ./backend/hotels-api
-      dockerfile: Dockerfile
-    ports:
-      - "8081:8081"
-    depends_on:
-      rabbit:
-        condition: service_healthy
-      mongo:
-        condition: service_started
-    environment:
-      - MONGO_HOST=mongo
-      - MONGO_PORT=27017
-      - RABBITMQ_HOST=rabbit
-      - RABBITMQ_PORT=5672
-      - RABBITMQ_USER=guest
-      - RABBITMQ_PASS=guest
+      - ./backend/search-api/solr-config:/opt/solr/server/solr/hotels
+    command: solr-create -c hotels
+    networks:
+      - app-network
 
   users-api:
+    image: users-api:latest
+    container_name: users-api-container
     build:
       context: ./backend/users-api
       dockerfile: Dockerfile
     ports:
-      - "8080:8080"
+      - "8081:8081"
+    command: /bin/sh -c "sleep 10 && go run main.go"
     depends_on:
-      memcached:
-        condition: service_healthy
-      mysql:
-        condition: service_started
-    environment:
-      - MYSQL_HOST=mysql
-      - MYSQL_PORT=3306
-      - MYSQL_USER=root
-      - MYSQL_PASSWORD=Tomihuspenina2003
-      - MYSQL_DATABASE=users
+      - memcached
+      - mysql
+    networks:
+      - app-network
 
+  hotels-api:
+    image: hotels-api:latest
+    container_name: hotels-api-container
+    build:
+      context: ./backend/hotels-api
+      dockerfile: Dockerfile
+    ports:
+      - "8080:8080"
+    command: /bin/sh -c "sleep 10 && go run main.go"
+    depends_on:
+      - mongo
+      - rabbitmq
+    networks:
+      - app-network
 
   reserva-api:
+    image: reserva-api:latest
+    container_name: reserva-api-container
     build:
       context: ./backend/reserva-api
       dockerfile: Dockerfile
     ports:
       - "8082:8082"
+    command: /bin/sh -c "sleep 10 && go run main.go"
     depends_on:
-      mysql:
-        condition: service_started
-    environment:
-      - MYSQL_HOST=mysql
-      - MYSQL_PORT=3306
-      - MYSQL_USER=root
-      - MYSQL_PASSWORD=Tomihuspenina2003
-      - MYSQL_DATABASE=reservas
+      - mysql
+    networks:
+      - app-network
 
   search-api:
+    image: search-api:latest
+    container_name: search-api-container
     build:
       context: ./backend/search-api
       dockerfile: Dockerfile
     ports:
       - "8083:8083"
+    command: /bin/sh -c "sleep 10 && go run main.go"
     depends_on:
-      solr:
-        condition: service_started
-      rabbit:
-        condition: service_healthy
-    environment:
-      - RABBITMQ_HOST=rabbit
-      - RABBITMQ_PORT=5672
-      - RABBITMQ_USER=guest
-      - RABBITMQ_PASS=guest
+      - rabbitmq
+      - solr
+    networks:
+      - app-network
 
   frontend:
+    image: frontend:latest
+    container_name: frontend-container
     build:
       context: ./frontend
       dockerfile: Dockerfile
     ports:
       - "3000:80"
     depends_on:
-      - search-api
       - hotels-api
       - users-api
       - reserva-api
+      - search-api
+    networks:
+      - app-network
 
 networks:
-  app-networks:
+  app-network:
     driver: bridge

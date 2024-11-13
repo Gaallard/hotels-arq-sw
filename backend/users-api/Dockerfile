@@ -1,11 +1,19 @@
-FROM golang:1.23.2-alpine AS builder
-WORKDIR /app
-COPY . . 
-RUN go build -o users .  
+# Use the Go image with Alpine for building and running the application
+FROM golang:1.23-alpine
 
-# Usa una imagen base de Alpine para el contenedor final
-FROM alpine:latest
+# Set the working directory inside the container
 WORKDIR /app
-COPY --from=builder /app/users .  
-EXPOSE 8081  
-ENTRYPOINT ["/app/users"] 
+
+# Copy go.mod and go.sum and download dependencies
+COPY go.mod go.sum ./
+RUN go mod tidy
+
+# Copy the rest of the code and build the application
+COPY . .
+RUN go build -o app ./main.go
+
+# Expose the port on which the app will run
+EXPOSE 8081
+
+# Command to run the binary
+CMD ["./app"]
