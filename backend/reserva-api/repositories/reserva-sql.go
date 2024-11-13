@@ -64,29 +64,37 @@ func (repository SQL) InsertReserva(ctx context.Context, reserva dao.Reserva) (d
 }
 
 func (repository SQL) UpdateReserva(ctx context.Context, reserva dao.Reserva) (dao.Reserva, error) {
-	result, err := repository.GetReservaById(reserva.ID)
-	log.Println("ID: ", reserva.ID)
-	if err != nil {
-		log.Panic("Error reversa no exists")
-		return reserva, fmt.Errorf("error reserva doesnt exists:")
+	var buscado dao.Reserva
+	println("noches recibido: ", reserva.Noches)
+
+	result := repository.db.Where("user = ? AND hotel = ?", reserva.User, reserva.Hotel).First(&buscado)
+
+	if result.Error != nil {
+		return dao.Reserva{}, fmt.Errorf("error finding document: %v", result.Error)
 	}
-	Newreserva := repository.db.Model(&result).Update("noches", reserva.Noches)
+
+	Newreserva := repository.db.Model(&buscado).Update("noches", reserva.Noches)
 	if Newreserva.Error != nil {
 		log.Panic("Error updating the hotel")
 		return reserva, fmt.Errorf("error updating document:")
 	}
-	return result, nil
+	println("hotel recibido: ", buscado.Noches)
+
+	return buscado, nil
 }
 
-func (repository SQL) DeleteReserva(id int64) error {
-	println("ID: ", id)
+func (repository SQL) DeleteReserva(ctx context.Context, reserva dao.Reserva) error {
+	var buscado dao.Reserva
+	println("user recibido: ", reserva.User)
+	println("hotel recibido: ", reserva.Hotel)
 
-	result, err := repository.GetReservaById(id)
-	if err != nil {
-		println("Error reversa no exists")
-		return fmt.Errorf("error reserva doesnt exists:")
+	result := repository.db.Where("user = ? AND hotel = ?", reserva.User, reserva.Hotel).First(&buscado)
+
+	if result.Error != nil {
+		println("Error buscando la reserva")
+		return fmt.Errorf("error buscando la reserva: %v", result.Error)
 	}
-	resul := repository.db.Delete(&result)
+	resul := repository.db.Delete(&buscado)
 	if resul.Error != nil {
 		println("Error deleting the hotel")
 		return fmt.Errorf("error deleting document:")

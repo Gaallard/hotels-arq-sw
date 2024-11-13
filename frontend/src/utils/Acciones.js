@@ -101,19 +101,23 @@ export async function reserva(Data){
   const data = {
     "user_id": token,
     "hotel_id": Data.hotel_id,
-    "noches": Data.noches
+    "noches":  parseInt(Data.noches, 10),
+    "estado": Data.estado,
   }
-  console.log("data id: ",data)
-  
+  console.log("Data id:", data);
+  console.log("Type of user_id:", typeof data.user_id);
+  console.log("Type of hotel_id:", typeof data.hotel_id);
+  console.log("Type of noches:", typeof data.noches);
+
   return axios.post('http://localhost:8083/reservas/',data, {
-    headers: { 'Authorization': `Bearer ${authToken}` }
+    headers: { 'Authorization': `Bearer ${authToken}`, 'Content-Type': 'application/json' }
   })
     .then(response => {
-      console.log('Reserva realizada: ', response)
+      console.log('Reserva realizada: ', response.data)
       return response.data
     })
     .catch(error => {
-      console.error('Reserva error: ', error)
+      console.error('Reserva error: ', error.response?.data || error.message)
       throw error;
     });
 }
@@ -123,13 +127,16 @@ export async function updateReserva(Data){
     const data = {
       "user_id": token,
       "hotel_id": Data.hotel_id,
+      "noches":  parseInt(Data.noches, 10),
+      "estado": Data.estado,
     }
     console.log("data id: ",data)
-    return axios.put('http://localhost:8083/reservas',data, {
+    console.log("Data: ", Data)
+    return axios.put('http://localhost:8083/reservas/',data, {
       headers: { 'Authorization': `Bearer ${authToken}` }
     })
       .then(response => {
-        console.log('Reserva realizada: ', response)
+        console.log('Reserva actualizada: ', response)
         return response.data
       })
       .catch(error => {
@@ -142,11 +149,13 @@ export async function updateReserva(Data){
     const token = await tokenId();
     const data = {
       "user_id": token,
-      "hotel_id": Data.hotel_id,
+      "hotel_id": Data,
+
     }
-    console.log("data id: ",data)
-    return axios.delete('http://localhost:8083/reservas',data, {
-      headers: { 'Authorization': `Bearer ${authToken}` }
+    console.log("data para eliminar: ",data)
+    return axios.delete('http://localhost:8083/reservas/', {
+      headers: { 'Authorization': `Bearer ${authToken}` },
+      data: data
     })
       .then(response => {
         console.log('Reserva realizada: ', response)

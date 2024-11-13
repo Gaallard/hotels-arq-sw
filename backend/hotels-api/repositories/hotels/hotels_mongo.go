@@ -159,18 +159,3 @@ func (repository Mongo) UpdateHotel(ctx context.Context, id string, hotel hotels
 
 	return nil
 }
-
-func (repository Mongo) DeleteHotel(ctx context.Context, id string) error {
-	// Get from MongoDB
-	objectID, err := primitive.ObjectIDFromHex(id)
-	if err != nil {
-		return fmt.Errorf("error converting id to mongo ID: %w", err)
-	}
-	result, err := repository.client.Database(repository.database).Collection(repository.collection).DeleteOne(ctx, bson.M{"_id": objectID})
-	if err != nil {
-		return fmt.Errorf("error finding/deleting document: %w", err)
-	}
-
-	println(result)
-	return nil
-}

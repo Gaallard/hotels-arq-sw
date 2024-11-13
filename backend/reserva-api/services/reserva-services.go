@@ -16,7 +16,7 @@ type Repository interface {
 	GetReservaById(id int64) (dao.Reserva, error)
 	InsertReserva(ctx context.Context, reserva dao.Reserva) (dao.Reserva, error)
 	UpdateReserva(ctx context.Context, reserva dao.Reserva) (dao.Reserva, error)
-	DeleteReserva(id int64) error
+	DeleteReserva(ctx context.Context, reserva dao.Reserva) error
 	GetMisReservasById(id int64) ([]dao.Reserva, error)
 }
 type Service struct {
@@ -73,6 +73,7 @@ func (service Service) GetMisReservasById(ctx context.Context, id int64) ([]doma
 			var hotelBuscado domain.Hotel
 			err = json.Unmarshal(body, &hotelBuscado)
 			result = append(result, domain.Hotel{
+				Id:     hotelBuscado.Id,
 				Name:   hotelBuscado.Name,
 				Noches: int64(hotel.Noches),
 			})
@@ -166,6 +167,9 @@ func (service Service) UpdateReserva(ctx context.Context, reserva domain.Reserva
 	Reserva.Hotel = reserva.Hotel
 	Reserva.Estado = int(reserva.Estado)
 
+	println("user recibido service: ", reserva.User)
+	println("hotel recibido service: ", reserva.Hotel)
+
 	reservaDomain, err := service.mainRepo.UpdateReserva(ctx, Reserva)
 	if err != nil {
 		return reserva, fmt.Errorf("Error insertar reserva service")
@@ -185,7 +189,7 @@ func (service Service) DeleteReserva(ctx context.Context, reserva domain.Reserva
 		Estado: int(reserva.Estado),
 	}
 	println("service: ", daoReserva.ID)
-	err := service.mainRepo.DeleteReserva(daoReserva.ID)
+	err := service.mainRepo.DeleteReserva(ctx, daoReserva)
 	if err != nil {
 		return fmt.Errorf("Error eliminando reserva service", reserva.ID, err)
 	}

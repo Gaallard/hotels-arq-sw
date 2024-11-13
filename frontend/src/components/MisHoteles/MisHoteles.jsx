@@ -7,7 +7,15 @@ import { updateReserva, deleteReserva,tokenId, getreservas } from '../../utils/A
 
 const MisHoteles = () => {
   const [hotels, setMyHotels] = useState([]);
+  //const [reservaData, setInfo] = useState
   const [valorID,setID] = useState('');
+  const [selectedHotel, setSelectedHotel] = useState(null);
+  const [showEditDialog, setShowEditDialog] = useState(false);
+  const [mensaje, setMensaje] = useState('');
+  const [cantNoches, setCantNoches] = useState(1);
+  const [reservas, setReservas] = useState('');
+
+
   useEffect(() => {
     const obtenerTokenId = async () => {
       try {
@@ -20,31 +28,6 @@ const MisHoteles = () => {
     obtenerTokenId();
   }, []);
   const navigate = useNavigate();
-
-  /*
-  useEffect(() => {
-    cargarHoteles(); 
-  }, []);
-
-
-  const cargarHoteles = () => {
-    const data = [
-      { id: 1, name: 'Hotel Boutique', description: 'Un lugar elegante y confortable en el corazón de la ciudad.' },
-      { id: 2, name: 'Hotel Lujo', description: 'Disfruta de una experiencia de lujo con vistas impresionantes.' },
-      { id: 3, name: 'Hotel Económico', description: 'Una opción cómoda y accesible para viajeros con presupuesto limitado.' }
-    ];
-    setHoteles(data); 
-  };*/
-
-  /*
-  useEffect(() => {
-    const token = sessionStorage.getItem('token');
-    if (!token) {
-      navigate('/users');
-    } else {
-      cargarHoteles(); // Cargar cursos inscritos si el usuario está autenticado
-    }
-  }, [navigate]);*/
 
   useEffect(() => {
     const fetchHotels = async () => {
@@ -59,9 +42,45 @@ const MisHoteles = () => {
     fetchHotels();
   }, []);
 
+  const openEditDialog = (hotel) => {
+    setSelectedHotel(hotel);
+    setCantNoches(hotel.noches); // Establece el valor inicial de noches en el modal
+    setShowEditDialog(true);
+  };
+
+  const closeEditDialog = () => {
+    setSelectedHotel(null);
+    setShowEditDialog(false);
+  };
+
+  const handleUpdateReserva = async (e) => {
+    e.preventDefault();
+    if (!cantNoches || cantNoches <= 0) {
+      setMensaje('Por favor, selecciona una cantidad válida de noches.');
+      return;
+    }
+    if (selectedHotel) {
+      const reservaData = {
+        hotel_id: selectedHotel._id,
+        user_id: await tokenId(),
+        noches: cantNoches,
+      };
+      console.log("info recivida: ",reservaData)
+      try {
+        const newReserva = await updateReserva(reservaData);  // Llama a la función reserva pasando los datos
+        setReservas((reservas) => [...reservas, newReserva]); 
+        setMensaje('Reserva actualizada con éxito');
+        closeEditDialog();
+      } catch (error) {
+        console.error('Error al actualizar la reserva:', error);
+        setMensaje('Error al actualizar la reserva');
+      }
+    }
+  };
+
   return (
     <div className="contenedor-misreservas">
-      <h1>Mis Reservas</h1>
+      <h1>MIS RESERVAS</h1>
       <Link to='/home'>
         <button type="boton2" className="boton-casa">
           <FaHome className="icon" />
@@ -74,10 +93,10 @@ const MisHoteles = () => {
               <h2>{data.name}</h2>
               <h4>{data.noches}</h4> 
               <div className="boton-container">
-                <button className="boton-actualizar">
+                <button className="boton-actualizar" onClick={() => openEditDialog(data)}>
                   Actualizar
                 </button>
-                <button className="boton-eliminar">
+                <button  onClick={() => deleteReserva(data._id)} className="boton-eliminar">
                   Eliminar
                 </button>
               </div>           
@@ -87,11 +106,24 @@ const MisHoteles = () => {
           <p>No tienes hoteles disponibles</p>
         )}
       </ul>
+
+      {showEditDialog && selectedHotel && (
+        <div className="modal">
+          <form onSubmit={handleUpdateReserva}>
+            <div className="modal-content">
+              <h2>Editar Reserva</h2>
+              <input type="number" value={cantNoches} onChange={(e) => setCantNoches(Number(e.target.value))} placeholder="Edicar cantidad de noches" min={1}/>
+              <div className="botones-mishoteles">
+                <button onClick={closeEditDialog}>Cancelar</button>
+                <button onClick={() => handleUpdateReserva(selectedHotel._id)}>Confirmar</button>
+              </div>
+            </div>
+          </form>
+        </div>
+      )}  
+
     </div>
   ); 
 };
 
 export default MisHoteles;
-
-//onClick={() => handleUpdateReserva(data.id)}
-//  onClick={() => handleDeleteReserva(data.id)}
