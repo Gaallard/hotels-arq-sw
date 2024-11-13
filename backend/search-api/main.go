@@ -31,7 +31,7 @@ func main() {
 	// Hotels API
 	hotelsAPI := repositories.NewHTTP(repositories.HTTPConfig{
 		Host: "localhost",
-		Port: "8081",
+		Port: "8080",
 	})
 
 	// Services
@@ -63,7 +63,7 @@ func main() {
 	})
 
 	router.GET("/search", controller.Search)
-	if err := router.Run(":8084"); err != nil {
+	if err := router.Run(":8083"); err != nil {
 		log.Fatalf("Error running application: %v", err)
 	}
 }

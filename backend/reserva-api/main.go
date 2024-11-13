@@ -20,7 +20,7 @@ func main() {
 	sqlconfig := repo.SQLConfig{
 		Name: "reservas",
 		User: "root",
-		Pass: "Tomas1927",
+		Pass: "root",
 		Host: "localhost",
 	}
 
@@ -49,5 +49,5 @@ func main() {
 	router.POST("/reservas/", Controller.InsertReserva)
 	router.PUT("/reservas/", Controller.UpdateReserva)
 	router.DELETE("/reservas/", Controller.DeleteReserva)
-	router.Run(":8083")
+	router.Run(":8082")
 }

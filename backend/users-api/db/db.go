@@ -38,7 +38,7 @@ func init() {
 
 	DBName := "users"
 	DBUser := "root"
-	DBPass := "Tomas1927"
+	DBPass := "root"
 	DBHost := "localhost"
 
 	db, err = gorm.Open("mysql", DBUser+":"+DBPass+"@tcp("+DBHost+":3306)/"+DBName+"?charset=utf8&parseTime=True")
