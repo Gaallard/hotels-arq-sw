@@ -76,6 +76,7 @@ const MisHoteles = () => {
         setMensaje('Error al actualizar la reserva');
       }
     }
+    window.location.reload();
   };
 
   return (
@@ -96,9 +97,15 @@ const MisHoteles = () => {
                 <button className="boton-actualizar" onClick={() => openEditDialog(data)}>
                   Actualizar
                 </button>
-                <button  onClick={() => deleteReserva(data._id)} className="boton-eliminar">
-                  Eliminar
-                </button>
+                <button
+            onClick={async () => {
+              await deleteReserva(data._id);
+              window.location.reload(); 
+            }}
+            className="boton-eliminar"
+          >
+            Eliminar
+          </button>
               </div>           
             </li>
           ))

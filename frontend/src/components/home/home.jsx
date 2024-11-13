@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { FaHome, FaWifi, FaCoffee, FaSwimmingPool, FaParking } from 'react-icons/fa';
 import { insertHotel, updateHotel, reserva, getAllHotels, search } from '../../utils/Acciones.js';
@@ -7,6 +8,7 @@ import { FaPlus } from 'react-icons/fa';
 import './home.css';
 import { useNavigate } from 'react-router-dom';
 import { tokenRole, tokenId } from '../../utils/Acciones';
+import Swal from 'sweetalert2';
 
 const MisHoteles = () => {
   const [showAddDialog, setShowAddDialog] = useState(false);
@@ -29,7 +31,20 @@ const closeAddDialog = () => {
     document.body.style.overflow = 'auto';
 };
 
-  const openEditDialog = (hotel) => { setSelectedHotel(hotel); setShowEditDialog(true); };
+const openEditDialog = (hotel) => {
+  setSelectedHotel(hotel);
+  setName(hotel.name || ''); 
+  setAddress(hotel.address || '');
+  setCountry(hotel.country || '');
+  setCity(hotel.city || '');
+  setState(hotel.state || '');
+  setAmenities(hotel.amenities || []);
+  setRating(hotel.rating || '');
+  setPrice(hotel.price || '');
+  setAvailableRooms(hotel.available_rooms || '');
+  setShowEditDialog(true);
+};
+
   const closeEditDialog = () => { setSelectedHotel(null); setShowEditDialog(false); };
 
   const [name, setName] = useState('');
@@ -95,6 +110,8 @@ const closeAddDialog = () => {
         setMensaje('Error al crear hotel');
         console.log("Error en handleInsertHotel:", error.response ? error.response.data : error.message);
     }
+
+    window.location.reload();
 };
 
 const handleUpdateHotelSubmit = async (e) => {
@@ -124,6 +141,8 @@ const handleUpdateHotelSubmit = async (e) => {
     console.error("Error en handleUpdateHotelSubmit:", error);
     setMensaje("Error al actualizar el hotel");
   }
+
+  window.location.reload();
 };
 
   const handleReserva = async (hotelId) => {
@@ -136,9 +155,23 @@ const handleUpdateHotelSubmit = async (e) => {
       const newReserva = await reserva(reservaData);  // Llama a la función reserva pasando los datos
       setReservas((reservas) => [...reservas, newReserva]);  // Actualiza el estado de reservas con la nueva reserva
       setMensaje('Reserva realizada con éxito');  // Muestra el mensaje de éxito
+      Swal.fire({
+        icon: 'success',
+        title: 'Reserva completada',
+        text: '¡Su reserva se ha realizado con éxito!',
+        confirmButtonText: 'Aceptar'
+      });
+      return;
     } catch (error) {
       console.error('Error al realizar la reserva:', error);
       setMensaje('Error al realizar la reserva');  // Muestra el mensaje de error
+      Swal.fire({
+        icon: 'error',
+        title: 'Error en la reserva',
+        text: 'Por favor, ingrese una cantidad válida de noches.',
+        confirmButtonText: 'Aceptar'
+      });
+      return;
     }
   };
 
@@ -191,7 +224,9 @@ const handleUpdateHotelSubmit = async (e) => {
               </li>
             ))}
           </ul>
-
+        <div>
+        <h3>rooms disponibles: <span>{data.available_rooms}</span></h3>
+        </div>
         </div>
         <div className="boton-reserva">
           <button onClick={() => handleReserva(data._id)}>Reservar</button>
@@ -213,15 +248,61 @@ const handleUpdateHotelSubmit = async (e) => {
       <form onSubmit={handleInsertHotel}>
         <div className="modal-content">
           <h2>Agregar Nuevo Hotel</h2>
-          <input type="text" id="name" value={name} onChange={(e) => setName(e.target.value)} placeholder="Nombre del Hotel" />
-          <input type="text" id="Dirección" value={address} onChange={(e) => setAddress(e.target.value)} placeholder="Dirección" />
-          <input type="text" id="Pais" value={country} onChange={(e) => setCountry(e.target.value)} placeholder="Pais" />
-          <input type="text" id="Ciudad" value={city} onChange={(e) => setCity(e.target.value)} placeholder="Ciudad" />
-          <input type="text" id="Estado" value={state} onChange={(e) => setState(e.target.value)} placeholder="Estado" />
-          <input type="text" id="amenities" value={amenities} onChange={(e) => setAmenities(e.target.value.split(','))} placeholder="Amenities" />
-          <input type="number" id="Calificación" value={rating} onChange={(e) => setRating(e.target.value)} placeholder="Calificación" />
-          <input type="text" id="Precio" value={price} onChange={(e) => setPrice(e.target.value)} placeholder="Precio" />
-          <input type="number" id="Habitaciones Disponibles" value={available_rooms} onChange={(e) => setAvailableRooms(e.target.value)} placeholder="Habitaciones Disponibles" />
+          <input
+  type="text"
+  value={name}
+  onChange={(e) => setName(e.target.value)}
+  placeholder="Nombre del Hotel"
+/>
+<input
+  type="text"
+  value={address}
+  onChange={(e) => setAddress(e.target.value)}
+  placeholder="Dirección"
+/>
+<input
+  type="text"
+  value={country}
+  onChange={(e) => setCountry(e.target.value)}
+  placeholder="País"
+/>
+<input
+  type="text"
+  value={city}
+  onChange={(e) => setCity(e.target.value)}
+  placeholder="Ciudad"
+/>
+<input
+  type="text"
+  value={state}
+  onChange={(e) => setState(e.target.value)}
+  placeholder="Estado"
+/>
+<input
+  type="text"
+  value={amenities.join(',')}
+  onChange={(e) => setAmenities(e.target.value.split(','))}
+  placeholder="Amenities"
+/>
+<input
+  type="number"
+  value={rating}
+  onChange={(e) => setRating(e.target.value)}
+  placeholder="Calificación"
+/>
+<input
+  type="text"
+  value={price}
+  onChange={(e) => setPrice(e.target.value)}
+  placeholder="Precio"
+/>
+<input
+  type="number"
+  value={available_rooms}
+  onChange={(e) => setAvailableRooms(e.target.value)}
+  placeholder="Habitaciones Disponibles"
+/>
+
           <button type="submit">Agregar</button>
           <button type="button" onClick={closeAddDialog}>Cancelar</button>
         </div>
@@ -260,3 +341,156 @@ const handleUpdateHotelSubmit = async (e) => {
 };
 
 export default MisHoteles; 
+
+/*
+
+import React, { useState, useEffect } from 'react';
+import { FaHome, FaWifi, FaCoffee, FaSwimmingPool, FaParking } from 'react-icons/fa';
+import { insertHotel, updateHotel, reserva, getAllHotels, search } from '../../utils/Acciones.js';
+import { CgGym } from "react-icons/cg";
+import { MdEdit } from 'react-icons/md';
+import { FaPlus } from 'react-icons/fa';
+import Swal from 'sweetalert2';
+import './home.css';
+import { useNavigate } from 'react-router-dom';
+import { tokenRole, tokenId } from '../../utils/Acciones';
+
+const MisHoteles = () => {
+  const [showAddDialog, setShowAddDialog] = useState(false);
+  const [showEditDialog, setShowEditDialog] = useState(false);
+  const [selectedHotel, setSelectedHotel] = useState(null);
+  const [hotels, setHotels] = useState([]);
+  const [isAdmin, setRole] = useState('');
+  const [mensaje, setMensaje] = useState('');
+  const navigate = useNavigate();
+  const [cantNoches, setCantNoches] = useState('');
+  const [reservados, setReservados] = useState({});
+
+  const openAddDialog = () => {
+    setShowAddDialog(true);
+    document.body.style.overflow = 'hidden'; 
+  };
+
+  const closeAddDialog = () => {
+    setShowAddDialog(false);
+    document.body.style.overflow = 'auto';
+  };
+
+  const openEditDialog = (hotel) => {
+    setSelectedHotel(hotel);
+    setShowEditDialog(true);
+  };
+
+  const closeEditDialog = () => {
+    setSelectedHotel(null);
+    setShowEditDialog(false);
+  };
+
+  const [name, setName] = useState('');
+  const [address, setAddress] = useState(''); 
+  const [country, setCountry] = useState(''); 
+  const [city, setCity] = useState(''); 
+  const [state, setState] = useState(''); 
+  const [amenities, setAmenities] = useState([]); 
+  const [rating, setRating] = useState(''); 
+  const [price, setPrice] = useState(''); 
+  const [available_rooms, setAvailableRooms] = useState('');
+
+  useEffect(() => {
+    const fetchRole = async () => {
+      try {
+        const role = await tokenRole();
+        setRole(role);
+        console.log("role: ", role);
+      } catch (error) {
+        console.error('Error fetching role:', error);
+      }
+    };
+    fetchRole();
+  }, []);
+
+  useEffect(() => {
+    const fetchHotels = async () => {
+      try {
+        const hotelsData = await getAllHotels();
+        console.log("Hoteles cargados:", hotelsData);
+        setHotels(hotelsData.results || hotelsData);
+      } catch (error) {
+        console.error('Error fetching hotels:', error);
+      }
+    };
+    fetchHotels();
+  }, []);
+
+  const handleReserva = (hotelId) => {
+    if (reservados[hotelId]) {
+      Swal.fire({
+        icon: 'info',
+        title: 'Ya reservado',
+        text: 'Este hotel ya ha sido reservado.',
+        confirmButtonText: 'Aceptar'
+      });
+      return;
+    }
+
+    if (!cantNoches || cantNoches <= 0) {
+      Swal.fire({
+        icon: 'error',
+        title: 'Error en la reserva',
+        text: 'Por favor, ingrese una cantidad válida de noches.',
+        confirmButtonText: 'Aceptar'
+      });
+      return;
+    }
+
+    setReservados((prev) => ({ ...prev, [hotelId]: true }));
+
+    Swal.fire({
+      icon: 'success',
+      title: 'Reserva completada',
+      text: '¡Su reserva se ha realizado con éxito!',
+      confirmButtonText: 'Aceptar'
+    });
+  };
+
+  return (
+    <div className="contenedor-reserva">
+      <h1>Reservar</h1>
+      
+      <div className="Barra-busqueda">
+        <input type="text" placeholder="Busque su hotel aquí" value={cantNoches} onChange={(e) => setCantNoches(e.target.value)} />
+        {isAdmin && (
+          <button className="Agregar-Hotel" onClick={openAddDialog}>
+            <FaPlus />
+          </button>
+        )}
+      </div>
+
+      <ul className="Grilla-amenities">
+        {hotels.length > 0 ? (
+          hotels.map((data) => (
+            <li key={data.id} className="bloque">
+              <img src={data.imageUrl} alt={data.name} className="hotel-imagen" />
+              <h2>{data.name}</h2>
+              <p>{data.city}</p>
+              <div className="boton-reserva">
+                <button onClick={() => handleReserva(data.id)}>Reservar</button>
+              </div>
+            </li>
+          ))
+        ) : (
+          <p>No tienes hoteles disponibles</p>
+        )}
+      </ul>
+
+      <button className="mishoteles" onClick={() => navigate('/mishoteles')}>
+        Mis Hoteles
+      </button>
+    </div>
+  ); 
+};
+
+export default MisHoteles;
+*/
+
+

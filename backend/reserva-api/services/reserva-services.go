@@ -142,7 +142,7 @@ func (service Service) InsertReserva(ctx context.Context, reserva domain.Reserva
 
 		// Verificar si la respuesta fue exitosa
 		if resp.StatusCode != http.StatusOK {
-			return domain.Reserva{}, fmt.Errorf("error en la respuesta del servidor, código de estado: %d", resp.StatusCode)
+			return domain.Reserva{}, fmt.Errorf("error en la respuesta del servidor, código de estado1: %d", resp.StatusCode)
 		}
 
 		reservaDomain, err := service.mainRepo.InsertReserva(ctx, Reserva)
@@ -230,12 +230,9 @@ func (service Service) DeleteReserva(ctx context.Context, reserva domain.Reserva
 	if err != nil {
 		return fmt.Errorf("error al enviar la solicitud PUT: %w", err)
 	}
-	if err != nil {
-		return fmt.Errorf("error to marshal: %v", err)
-	}
 
 	if resp.StatusCode != http.StatusOK {
-		return fmt.Errorf("error en la respuesta del servidor, código de estado: %d", resp.StatusCode)
+		return fmt.Errorf("error en la respuesta del servidor, código de estado2: %d", resp.StatusCode)
 	}
 
 	return nil

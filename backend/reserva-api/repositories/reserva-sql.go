@@ -55,6 +55,17 @@ func (repository SQL) GetReservaById(id int64) (dao.Reserva, error) {
 }
 
 func (repository SQL) InsertReserva(ctx context.Context, reserva dao.Reserva) (dao.Reserva, error) {
+	var buscado dao.Reserva
+	println("noches recibido: ", reserva.Noches)
+
+	repeat := repository.db.Where("user = ? AND hotel = ?", reserva.User, reserva.Hotel).First(&buscado)
+
+	if repeat.RowsAffected > 0 {
+		log.Error("Usuario ya suscripto")
+
+		return reserva, fmt.Errorf("error ya:", repeat.Error)
+	}
+
 	result := repository.db.Create(&reserva)
 	if result.Error != nil {
 		log.Panic("Error creating the hotel")
