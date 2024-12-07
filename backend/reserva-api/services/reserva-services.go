@@ -139,7 +139,7 @@ func (service Service) InsertReserva(ctx context.Context, reserva domain.Reserva
 		if err != nil {
 			return domain.Reserva{}, fmt.Errorf("error al enviar la solicitud PUT: %w", err)
 		}
-
+		println("Recibe hotel del servidor: ", hotel.Id)
 		// Verificar si la respuesta fue exitosa
 		if resp.StatusCode != http.StatusOK {
 			return domain.Reserva{}, fmt.Errorf("error en la respuesta del servidor, código de estado1: %d", resp.StatusCode)

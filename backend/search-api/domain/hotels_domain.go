@@ -1,7 +1,7 @@
 package domain
 
 type Hotel struct {
-	Id              string   `json:"_id"`
+	Id              string   `json:"id"`
 	Name            string   `json:"name"`
 	Address         string   `json:"address"`
 	City            string   `json:"city"`

@@ -132,9 +132,9 @@ const handleUpdateHotelSubmit = async (e) => {
   };
 
   try {
-    console.log("id hotel seleccionado: ", selectedHotel._id)
-    const updatedHotel = await updateHotel(selectedHotel._id, hotelData);
-    setHotels(hotels.map((hotel) => hotel._id === selectedHotel._id ? updatedHotel : hotel));
+    console.log("id hotel seleccionado: ", selectedHotel.id)
+    const updatedHotel = await updateHotel(selectedHotel.id, hotelData);
+    setHotels(hotels.map((hotel) => hotel.id === selectedHotel.id ? updatedHotel : hotel));
     setMensaje('Hotel actualizado con éxito');
     setShowEditDialog(false); // Cierra el modal
   } catch (error) {
@@ -229,7 +229,7 @@ const handleUpdateHotelSubmit = async (e) => {
         </div>
         </div>
         <div className="boton-reserva">
-          <button onClick={() => handleReserva(data._id)}>Reservar</button>
+          <button onClick={() => handleReserva(data.id)}>Reservar</button>
         </div>
         {isAdmin && (
           <button className="boton-editar" onClick={() => openEditDialog(data)}>

@@ -1,7 +1,7 @@
 package dao
 
 type Hotel struct {
-	Id              string   `bson:"_id"`
+	Id              string   `bson:"id"`
 	Name            string   `bson:"name"`
 	Address         string   `bson:"address"`
 	City            string   `bson:"city"`

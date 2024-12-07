@@ -99,7 +99,7 @@ const MisHoteles = () => {
                 </button>
                 <button
             onClick={async () => {
-              await deleteReserva(data._id);
+              await deleteReserva(data.id);
               window.location.reload(); 
             }}
             className="boton-eliminar"

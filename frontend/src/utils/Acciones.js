@@ -46,6 +46,7 @@ export async function insertHotel({ name, address, country, city, state, ameniti
 
 export async function updateHotel(hotelId, { name, address, country, city, state, amenities, rating, price, available_rooms }) {
   try {
+    console.log("este id estoy pasando: ", hotelId)
     const response = await axios.put(`http://localhost:8081/hotels/${hotelId}`, { name, address, country, city, state, amenities, rating, price, available_rooms }, {
       headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` }
     });

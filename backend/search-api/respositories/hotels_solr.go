@@ -92,17 +92,12 @@ func (searchEngine Solr) Update(ctx context.Context, hotel dao.Hotel) error {
 	}
 
 	// Prepare the update request
-	if err := searchEngine.Delete(ctx, hotel.Id); err != nil {
+	/*if err := searchEngine.Delete(ctx, hotel.Id); err != nil {
 		return fmt.Errorf("error deleting hotel before update: %w", err)
 	}
-
+	*/
 	updateRequest := map[string]interface{}{
-		"add": []interface{}{
-			map[string]interface{}{
-				"doc":       doc,
-				"overwrite": true, // Habilita el comportamiento de actualización
-			},
-		},
+		"add": []interface{}{doc}, // Use "add" with a list of documents
 	}
 	// Update the document in Solr
 	body, err := json.Marshal(updateRequest)
@@ -132,7 +127,7 @@ func (searchEngine Solr) Delete(ctx context.Context, id string) error {
 	// Prepare the delete request
 	docToDelete := map[string]interface{}{
 		"delete": map[string]interface{}{
-			"sid": id,
+			"id": id,
 		},
 	}
 
