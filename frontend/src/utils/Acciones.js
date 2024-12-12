@@ -86,13 +86,16 @@ export async function getreservas() {
 
 export async function getHotelById(hotelId) {
   try {
+    console.log("este id estoy pasando: ", hotelId)
     const response = await axios.get(`http://localhost:8081/hotels/${hotelId}`, {
       headers: { 'Authorization': `Bearer ${authToken}` }
     });
     console.log('Hotel cargado:', response.data);
     return response.data;
   } catch (error) {
-    console.error('Error al obtener los hoteles:', error.response ? error.response.data : error.message);
+    console.error('hotelid bolit: ', error.response.hotel_id)
+    console.error('response data del ocote: ', error.response.data)
+    console.error('Error al obtener los hoteles¡?:', error.response ? error.response.data : error.message);
     throw error;
   }
 }

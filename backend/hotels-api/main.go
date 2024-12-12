@@ -74,7 +74,7 @@ func main() {
 
 	router.PUT("/hotels/:id", controller.UpdateHotel)
 
-	log.Println("Servidor corriendo en http://localhost:8080")
+	log.Println("Servidor corriendo en http://localhost:8081")
 	if err := router.Run(":8081"); err != nil {
 		log.Fatalf("Error al iniciar el servidor: %v", err)
 	}

@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState } from 'react';
 import Swal from 'sweetalert2';
 import './LoginRegister.css';
 import { FaUserAlt, FaLock } from "react-icons/fa";

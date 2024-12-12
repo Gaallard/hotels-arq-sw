@@ -1,5 +1,132 @@
 
 import React, { useState, useEffect } from 'react';
+import { FaHome } from 'react-icons/fa';
+import { insertHotel, updateHotel, reserva, getAllHotels } from '../../utils/Acciones.js';
+import { MdEdit } from 'react-icons/md';
+import { FaPlus } from 'react-icons/fa';
+import Swal from 'sweetalert2';
+import './home.css';
+import { useNavigate } from 'react-router-dom';
+import { tokenRole } from '../../utils/Acciones';
+
+const MisHoteles = () => {
+  const [showAddDialog, setShowAddDialog] = useState(false);
+  const [showEditDialog, setShowEditDialog] = useState(false);
+  const [selectedHotel, setSelectedHotel] = useState(null);
+  const [hotels, setHotels] = useState([]);
+  const [filteredHotels, setFilteredHotels] = useState([]);
+  const [isAdmin, setRole] = useState('');
+  const [searchQuery, setSearchQuery] = useState('');
+
+  const navigate = useNavigate();
+
+  const openAddDialog = () => {
+    setShowAddDialog(true);
+    document.body.style.overflow = 'hidden';
+  };
+
+  const closeAddDialog = () => {
+    setShowAddDialog(false);
+    document.body.style.overflow = 'auto';
+  };
+
+  const openEditDialog = (hotel) => {
+    setSelectedHotel(hotel);
+    setShowEditDialog(true);
+  };
+
+  const closeEditDialog = () => {
+    setSelectedHotel(null);
+    setShowEditDialog(false);
+  };
+
+  useEffect(() => {
+    const fetchRole = async () => {
+      try {
+        const role = await tokenRole();
+        setRole(role);
+        console.log("role: ", role);
+      } catch (error) {
+        console.error('Error fetching role:', error);
+      }
+    };
+    fetchRole();
+  }, []);
+
+  useEffect(() => {
+    const fetchHotels = async () => {
+      try {
+        const hotelsData = await getAllHotels();
+        console.log("Hoteles cargados:", hotelsData);
+        setHotels(hotelsData.results || hotelsData);
+        setFilteredHotels(hotelsData.results || hotelsData);
+      } catch (error) {
+        console.error('Error fetching hotels:', error);
+      }
+    };
+    fetchHotels();
+  }, []);
+
+  const handleSearch = () => {
+    if (searchQuery.trim() === '') {
+      setFilteredHotels(hotels);
+      return;
+    }
+    const filtered = hotels.filter((hotel) =>
+      hotel.name.toLowerCase().includes(searchQuery.toLowerCase())
+    );
+    setFilteredHotels(filtered);
+  };
+
+  return (
+    <div className="contenedor-reserva">
+      <h1>Reservar</h1>
+
+      <div className="Barra-busqueda">
+        <input
+          type="text"
+          placeholder="Buscar hotel"
+          value={searchQuery}
+          onChange={(e) => setSearchQuery(e.target.value)}
+        />
+        <button onClick={handleSearch}>Buscar</button>
+        {isAdmin && (
+          <button className="Agregar-Hotel" onClick={openAddDialog}>
+            <FaPlus /> Agregar Hotel
+          </button>
+        )}
+      </div>
+
+      <ul className="Grilla-amenities">
+        {filteredHotels.length > 0 ? (
+          filteredHotels.map((data) => (
+            <li key={data.id} className="bloque">
+              <h2>{data.name}</h2>
+              <p>{data.description || "Una breve descripción del hotel."}</p>
+              <button className="boton-detalles" onClick={() => navigate(`/moreinfo/${data._id}`)}>Ver Detalles</button>
+            </li>
+          ))
+        ) : (
+          <p>No se encontraron hoteles.</p>
+        )}
+      </ul>
+
+      <button className="mishoteles" onClick={() => navigate('/mishoteles')}>
+        Mis Hoteles
+      </button>
+    </div>
+  );
+};
+
+export default MisHoteles;
+
+
+
+
+
+
+/*
+import React, { useState, useEffect } from 'react';
 import { FaHome, FaWifi, FaCoffee, FaSwimmingPool, FaParking } from 'react-icons/fa';
 import { insertHotel, updateHotel, reserva, getAllHotels, search } from '../../utils/Acciones.js';
 import { CgGym } from "react-icons/cg";
