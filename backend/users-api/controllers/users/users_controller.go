@@ -1,24 +1,40 @@
 package usersController
 
 import (
-	Service "backend/services/users"
 	"strings"
 
 	"github.com/gin-gonic/gin"
 
-	userDomain "backend/domain"
+	Domain "backend/domain"
 
+	e "backend/errors"
 	middle "backend/middleware"
 	"net/http"
 
 	log "github.com/sirupsen/logrus"
 )
 
-func Login(c *gin.Context) {
-	var userData userDomain.UserData
+type UserService interface {
+	GetUserByName(usuarioDomain Domain.UserData) (Domain.UserData, e.ApiError)
+	Login(User Domain.UserData) (Domain.LoginData, e.ApiError)
+	InsertUsuario(usuarioDomain Domain.UserData) (Domain.UserData, e.ApiError)
+}
+
+type Controller struct {
+	service UserService
+}
+
+func NewController(service UserService) Controller {
+	return Controller{
+		service: service,
+	}
+}
+
+func (controller Controller) Login(c *gin.Context) {
+	var userData Domain.UserData
 	c.BindJSON(&userData)
 
-	loginResponse, err := Service.UserService.Login(userData)
+	loginResponse, err := controller.service.Login(userData)
 	if err != nil {
 		c.JSON(err.Status(), err)
 		return
@@ -37,7 +53,7 @@ func Login(c *gin.Context) {
 	*/
 	c.JSON(http.StatusOK, loginResponse)
 }
-func Extrac(c *gin.Context) {
+func (controller Controller) Extrac(c *gin.Context) {
 	data := strings.TrimSpace(c.GetHeader("Authorization"))
 	log.Println("token buscado: ", data)
 	response, err := middle.ExtractClaims(data)
@@ -48,12 +64,12 @@ func Extrac(c *gin.Context) {
 	c.JSON(http.StatusOK, response)
 }
 
-func GetUserByName(c *gin.Context) {
+func (controller Controller) GetUserByName(c *gin.Context) {
 
-	var userDomain userDomain.UserData
+	var userDomain Domain.UserData
 	c.BindJSON(&userDomain)
 
-	userDomain, err := Service.UserService.GetUserByName(userDomain)
+	userDomain, err := controller.service.GetUserByName(userDomain)
 
 	if err != nil {
 		c.JSON(err.Status(), err)
@@ -63,8 +79,8 @@ func GetUserByName(c *gin.Context) {
 
 }
 
-func UsuarioInsert(c *gin.Context) {
-	var userDomain userDomain.UserData
+func (controller Controller) UsuarioInsert(c *gin.Context) {
+	var userDomain Domain.UserData
 	err := c.BindJSON(&userDomain)
 
 	if err != nil {
@@ -79,7 +95,7 @@ func UsuarioInsert(c *gin.Context) {
 		log.Info("creating regular user")
 	}
 
-	userDomain, er := Service.UserService.InsertUsuario(userDomain)
+	userDomain, er := controller.service.InsertUsuario(userDomain)
 
 	if er != nil {
 		c.JSON(er.Status(), er)

@@ -2,7 +2,6 @@ package main
 
 import (
 	"net/http"
-	"os"
 	controller "reserva-api/controller"
 	repo "reserva-api/repositories"
 	service "reserva-api/services"
@@ -20,9 +19,12 @@ type Controller interface {
 func main() {
 	sqlconfig := repo.SQLConfig{
 		Name: "reservas",
-		User: os.Getenv("DB_USER"),
-		Pass: os.Getenv("DB_PASSWORD"),
-		Host: os.Getenv("DB_HOST"),
+		User: "root",
+		Pass: "root",
+		Host: "localhost",
+		//User: os.Getenv("DB_USER"),
+		//	Pass: os.Getenv("DB_PASSWORD"),
+		//Host: os.Getenv("DB_HOST"),
 	}
 
 	mainRepo := repo.NewSql(sqlconfig)

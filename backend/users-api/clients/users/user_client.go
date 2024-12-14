@@ -1,32 +1,61 @@
 package clientUsers
 
 import (
-	Domain "backend/domain"
 	e "backend/errors"
 	Model "backend/model"
+
+	_ "github.com/jinzhu/gorm/dialects/mysql"
 
 	"github.com/jinzhu/gorm"
 	log "github.com/sirupsen/logrus"
 )
 
-var Db *gorm.DB
+type SQLConfig struct {
+	Name string
+	User string
+	Pass string
+	Host string
+}
 
-func GetUserByName(Usuario Domain.UserData) (Model.User, e.ApiError) {
+type SQL struct {
+	db       *gorm.DB
+	Database string
+}
+
+// DeleteReserva implements reservas.Repository.
+
+func NewSql(config SQLConfig) SQL {
+	db, err := gorm.Open("mysql", config.User+":"+config.Pass+"@tcp("+config.Host+":3306)/"+config.Name+"?charset=utf8&parseTime=True")
+	if err != nil {
+		log.Println("Connection Failed to Open")
+		log.Fatal(err)
+	} else {
+		log.Println("Connection Established gg")
+	}
+	db.AutoMigrate(&Model.User{})
+	return SQL{
+		db:       db,
+		Database: config.Name,
+	}
+
+}
+
+func (repository SQL) GetUserByName(Usuario Model.User) (Model.User, e.ApiError) {
 	var user Model.User
 
-	result := Db.Where("User = ?", Usuario.User).First(&user)
+	result := repository.db.Where("User = ?", Usuario.User).First(&user)
 	log.Debug("User: ", user)
 	if result.Error != nil {
 		log.Error("Error al buscar el usuario")
 		log.Error(result.Error)
 		return user, e.NewBadRequestApiError("Error al buscar el usuario")
 	}
-
+	println("se busci user en main")
 	return user, nil
 }
 
-func InsertUsuario(user Model.User) (Model.User, e.ApiError) {
-	result := Db.Create(&user)
+func (repository SQL) InsertUsuario(user Model.User) (Model.User, e.ApiError) {
+	result := repository.db.Create(&user)
 
 	if result.Error != nil {
 		log.Error("Error al crear el usuario")
@@ -37,10 +66,10 @@ func InsertUsuario(user Model.User) (Model.User, e.ApiError) {
 	return user, nil
 }
 
-func GetUserById(Id int) (Model.User, e.ApiError) {
+func (repository SQL) GetUserById(Id int) (Model.User, e.ApiError) {
 	var userId Model.User
 
-	result := Db.Where("id = ?", Id).First(&userId)
+	result := repository.db.Where("id = ?", Id).First(&userId)
 	log.Debug("id: ", userId)
 	if result.Error != nil {
 		log.Error("Error al buscar el usuario")
@@ -51,10 +80,10 @@ func GetUserById(Id int) (Model.User, e.ApiError) {
 	return userId, nil
 }
 
-func GetuserName(buscado int) (string, e.ApiError) {
+func (repository SQL) GetuserName(buscado int) (string, e.ApiError) {
 	var userId Model.User
 
-	result := Db.Where("id = ?", buscado).First(&userId)
+	result := repository.db.Where("id = ?", buscado).First(&userId)
 	if result.Error != nil {
 		log.Error("Error al buscar el usuario")
 		log.Error(result.Error)

@@ -7,32 +7,46 @@ import (
 	"encoding/hex"
 	"time"
 
-	Clients "backend/clients/users"
-
 	e "backend/errors"
 
 	jwt "github.com/dgrijalva/jwt-go"
 )
 
-type userService struct{}
-
 type userServiceInterface interface {
-	GetUserByName(user Domain.UserData) (Domain.UserData, e.ApiError)
-	InsertUsuario(usuarioDomain Domain.UserData) (Domain.UserData, e.ApiError)
-	Login(User Domain.UserData) (Domain.LoginData, e.ApiError)
+	GetUserByName(user Model.User) (Model.User, e.ApiError)
+	InsertUsuario(usuarioDomain Model.User) (Model.User, e.ApiError)
 }
 
-var (
-	UserService userServiceInterface
-)
-
-func init() {
-	UserService = &userService{}
+type Service struct {
+	UserService  userServiceInterface
+	cacheService userServiceInterface
 }
 
-func (s *userService) GetUserByName(usuario Domain.UserData) (Domain.UserData, e.ApiError) {
+func NewService(UserService userServiceInterface, cacheService userServiceInterface) Service {
+	return Service{
+		UserService:  UserService,
+		cacheService: cacheService,
+	}
+}
 
-	var user, err = Clients.GetUserByName(usuario)
+func (s Service) GetUserByName(usuarioDomain Domain.UserData) (Domain.UserData, e.ApiError) {
+
+	usuario := Model.User{
+		User: usuarioDomain.User,
+	}
+
+	user, err := s.cacheService.GetUserByName(usuario)
+	if err != nil {
+		user, err = s.UserService.GetUserByName(usuario)
+
+		if err != nil {
+			return Domain.UserData{}, e.NewBadRequestApiError("Error al buscar el usuario")
+		}
+
+		if _, err := s.cacheService.InsertUsuario(usuario); err != nil {
+			return Domain.UserData{}, e.NewBadRequestApiError("Error al insertar el usuario a cache")
+		}
+	}
 	var userDomain Domain.UserData
 
 	if err != nil {
@@ -48,29 +62,34 @@ func (s *userService) GetUserByName(usuario Domain.UserData) (Domain.UserData, e
 
 }
 
-func (u *userService) InsertUsuario(usuarioDomain Domain.UserData) (Domain.UserData, e.ApiError) {
+func (s Service) InsertUsuario(usuarioDomain Domain.UserData) (Domain.UserData, e.ApiError) {
 
-	var usuario Model.User
-	var result, er = Clients.GetUserByName(usuarioDomain)
+	usuario := Model.User{
+		User:  usuarioDomain.User,
+		Admin: usuarioDomain.Admin,
+	}
+
+	var result, er = s.UserService.GetUserByName(usuario)
 
 	if er != nil {
-
-		usuario.User = usuarioDomain.User
-		usuario.Password = usuarioDomain.Password
-		usuario.Admin = usuarioDomain.Admin
 
 		hash := md5.New()
 		hash.Write([]byte(usuarioDomain.Password))
 		usuario.Password = hex.EncodeToString(hash.Sum(nil))
 
-		var usuario2, err = Clients.InsertUsuario(usuario)
+		usuario2, err := s.UserService.InsertUsuario(usuario)
 
 		if err != nil {
 			return usuarioDomain, e.NewBadRequestApiError("usuario no inseertado")
 		}
 
+		_, err = s.cacheService.InsertUsuario(usuario2)
+
+		if err != nil {
+			return usuarioDomain, e.NewBadRequestApiError("usuario no insertado en cache")
+		}
+
 		usuarioDomain.Id = usuario2.Id
-		usuarioDomain.Admin = usuario.Admin
 
 		return usuarioDomain, nil
 	}
@@ -79,8 +98,18 @@ func (u *userService) InsertUsuario(usuarioDomain Domain.UserData) (Domain.UserD
 
 }
 
-func (u *userService) Login(User Domain.UserData) (Domain.LoginData, e.ApiError) {
-	var user, err = Clients.GetUserByName(User)
+func (s Service) Login(User Domain.UserData) (Domain.LoginData, e.ApiError) {
+
+	usuario := Model.User{
+		User:  User.User,
+		Admin: User.Admin,
+	}
+
+	var user, err = s.cacheService.GetUserByName(usuario)
+	if err != nil {
+		user, err = s.cacheService.GetUserByName(usuario)
+
+	}
 	var tokenDomain Domain.LoginData
 
 	if err != nil {
