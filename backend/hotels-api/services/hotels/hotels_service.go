@@ -1,4 +1,4 @@
-package hotels
+package services
 
 import (
 	"context"
@@ -123,7 +123,7 @@ func (service Service) GetHotelsAvailability(ctx context.Context, id string) (ho
 
 	hotelDAO, err := service.mainRepository.GetHotelByID(ctx, id)
 	if err != nil {
-		return hotelsDomain.Hotel{}, fmt.Errorf("no se encontro el hotel: ", err)
+		return hotelsDomain.Hotel{}, fmt.Errorf("no se encontro el hotel %w: ", err)
 	}
 	return hotelsDomain.Hotel{
 		Id:              hotelDAO.Id,
@@ -186,7 +186,6 @@ func (service Service) UpdateHotel(ctx context.Context, id string, hotel hotelsD
 		if err != nil {
 			return fmt.Errorf("error updating hotel in main repository: %w", err)
 		}
-
 	}
 
 	if err := service.rabbitRpo.Publish(hotelsDomain.HotelNew{

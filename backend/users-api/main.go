@@ -43,7 +43,7 @@ func main() {
 		Name: "users",
 		User: "root",
 		Pass: "root",
-		Host: "localhost",
+		Host: "mysql",
 		//Name: "users",
 		//	User: "root",
 		//Pass: "root",
@@ -67,6 +67,6 @@ func main() {
 		authorized.GET("/users", controller.GetUserByName)
 
 	}
-	router.Run(":8081")
+	router.Run(":8080")
 
 }
