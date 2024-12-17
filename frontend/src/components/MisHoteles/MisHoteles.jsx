@@ -3,17 +3,34 @@ import { Link } from 'react-router-dom';
 import './MisHoteles.css';
 import { FaHome } from 'react-icons/fa';
 import { useNavigate } from 'react-router-dom';
-import { updateReserva, deleteReserva,tokenId, getreservas } from '../../utils/Acciones';
+import DatePicker from 'react-datepicker';
+import 'react-datepicker/dist/react-datepicker.css';
+import { updateReserva, deleteReserva, tokenId, getreservas } from '../../utils/Acciones';
 
 const MisHoteles = () => {
   const [hotels, setMyHotels] = useState([]);
   //const [reservaData, setInfo] = useState
-  const [valorID,setID] = useState('');
+  const [valorID, setID] = useState('');
   const [selectedHotel, setSelectedHotel] = useState(null);
   const [showEditDialog, setShowEditDialog] = useState(false);
   const [mensaje, setMensaje] = useState('');
   const [cantNoches, setCantNoches] = useState(1);
   const [reservas, setReservas] = useState('');
+  const [fechaIngreso, setFechaIngreso] = useState(new Date())
+  const [fechaSalida, setFechaSalida] = useState(new Date())
+
+
+  const calculateNights = (start, end) => {
+    const diffTime = Math.abs(end - start);
+    return Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+  };
+
+  useEffect(() => {
+    if (fechaIngreso && fechaSalida) {
+      const nights = calculateNights(fechaIngreso, fechaSalida);
+      setCantNoches(nights);
+    }
+  }, [fechaIngreso, fechaSalida]);
 
 
   useEffect(() => {
@@ -55,28 +72,33 @@ const MisHoteles = () => {
 
   const handleUpdateReserva = async (e) => {
     e.preventDefault();
-    if (!cantNoches || cantNoches <= 0) {
-      setMensaje('Por favor, selecciona una cantidad válida de noches.');
+    const noches = calculateNights(fechaIngreso, fechaSalida);
+
+    if (!noches || noches <= 0) {
+      setMensaje('Por favor, selecciona fechas válidas.');
       return;
     }
+
     if (selectedHotel) {
       const reservaData = {
-        hotel_id: selectedHotel._id,
+        hotel_id: selectedHotel.id,
         user_id: await tokenId(),
-        noches: cantNoches,
+        fechaIngreso: fechaIngreso.toISOString(),
+        fechaSalida: fechaSalida.toISOString(),
+        noches,
       };
-      console.log("info recivida: ",reservaData)
+
       try {
-        const newReserva = await updateReserva(reservaData);  // Llama a la función reserva pasando los datos
-        setReservas((reservas) => [...reservas, newReserva]); 
+        const newReserva = await updateReserva(reservaData);
+        setReservas((reservas) => [...reservas, newReserva]);
         setMensaje('Reserva actualizada con éxito');
         closeEditDialog();
+        window.location.reload();
       } catch (error) {
         console.error('Error al actualizar la reserva:', error);
         setMensaje('Error al actualizar la reserva');
       }
     }
-    window.location.reload();
   };
 
   return (
@@ -92,7 +114,10 @@ const MisHoteles = () => {
           hotels.map((data) => (
             <li key={data.id} className="lista-hoteles">
               <h2>{data.name}</h2>
-              <h4>{data.noches}</h4> 
+              <h4>Fecha ingreso:  {data.fecha_ingreso}</h4> 
+              <h4>Fecha egreso:  {data.fecha_salida}</h4> 
+              <h4>Noches reservadas: {data.noches}</h4> 
+              <h4>Precio de la reserva ${data.price * data.noches}</h4>
               <div className="boton-container">
                 <button className="boton-actualizar" onClick={() => openEditDialog(data)}>
                   Actualizar
@@ -102,8 +127,7 @@ const MisHoteles = () => {
               await deleteReserva(data.id);
               window.location.reload(); 
             }}
-            className="boton-eliminar"
-          >
+            className="boton-eliminar">
             Eliminar
           </button>
               </div>           
@@ -119,10 +143,22 @@ const MisHoteles = () => {
           <form onSubmit={handleUpdateReserva}>
             <div className="modal-content">
               <h2>Editar Reserva</h2>
-              <input type="number" value={cantNoches} onChange={(e) => setCantNoches(Number(e.target.value))} placeholder="Edicar cantidad de noches" min={1}/>
+              <label>Fecha de Ingreso:</label>
+              <DatePicker
+                selected={fechaIngreso}
+                onChange={(date) => setFechaIngreso(date)}
+                dateFormat="dd-MM-yyyy"
+              />
+              <label>Fecha de Salida:</label>
+              <DatePicker
+                selected={fechaSalida}
+                onChange={(date) => setFechaSalida(date)}
+                dateFormat="dd-MM-yyyy"
+                minDate={fechaIngreso} // Evita seleccionar fechas anteriores a la de ingreso
+              />
               <div className="botones-mishoteles">
-                <button onClick={closeEditDialog}>Cancelar</button>
-                <button onClick={() => handleUpdateReserva(selectedHotel._id)}>Confirmar</button>
+                <button type="button" onClick={closeEditDialog}>Cancelar</button>
+                <button type="submit">Confirmar</button>
               </div>
             </div>
           </form>

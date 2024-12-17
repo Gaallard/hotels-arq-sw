@@ -80,7 +80,6 @@ func (controller Controller) GetMisReservasById(ctx *gin.Context) {
 func (controller Controller) InsertReserva(ctx *gin.Context) {
 	var reservaDomain Domain.Reserva
 	err := ctx.BindJSON(&reservaDomain)
-
 	if err != nil {
 		ctx.JSON(http.StatusBadRequest, gin.H{
 			"error": fmt.Sprintf("invalid data"),

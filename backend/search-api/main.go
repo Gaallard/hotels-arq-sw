@@ -30,7 +30,7 @@ func main() {
 
 	// Hotels API
 	hotelsAPI := repositories.NewHTTP(repositories.HTTPConfig{
-		Host: "hotels-api",
+		Host: "nginx",
 		Port: "8081",
 	})
 

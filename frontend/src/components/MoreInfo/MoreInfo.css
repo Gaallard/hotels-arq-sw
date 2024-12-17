@@ -1,43 +1,88 @@
-/* HotelDetails.css */
-
 .hotel-details {
-    max-width: 600px;
-    margin: 50px auto;
-    padding: 20px;
-    background-color: #f9f9f9;
-    border-radius: 10px;
-    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-  }
-  
-  .hotel-details h1 {
-    font-size: 2rem;
-    margin-bottom: 20px;
-    color: #333;
-  }
-  
-  .hotel-details p {
-    font-size: 1rem;
-    margin: 10px 0;
-    color: #555;
-  }
-  
-  .hotel-details strong {
-    color: #000;
-  }
-  
-  .hotel-details button {
-    display: inline-block;
-    margin-top: 20px;
-    padding: 10px 20px;
-    background-color: #007bff;
-    color: #fff;
-    border: none;
-    border-radius: 5px;
-    cursor: pointer;
-    font-size: 1rem;
-  }
-  
-  .hotel-details button:hover {
-    background-color: #0056b3;
-  }
-  
+  max-width: 600px;
+  margin: 50px auto;
+  padding: 20px;
+  background-color: #333;
+  color: #f5f5f5; 
+  border-radius: 10px;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3); 
+}
+
+.hotel-details h1 {
+  font-size: 2rem;
+  margin-bottom: 20px;
+  color: #E0A96D; 
+}
+
+.hotel-details p {
+  font-size: 1rem;
+  margin: 10px 0;
+  color: #ddd; 
+}
+
+.hotel-details strong {
+  color: #E0A96D; 
+}
+
+.hotel-details button {
+  display: inline-block;
+  margin-top: 20px;
+  padding: 10px 20px;
+  background-color: #E0A96D; 
+  color: #333; 
+  border: none;
+  border-radius: 5px;
+  cursor: pointer;
+  font-size: 1rem;
+  transition: background-color 0.3s ease;
+}
+
+.hotel-details button:hover {
+  background-color: #c89054; 
+}
+
+.calendar-container {
+  background: #444; 
+  color: #f5f5f5; 
+  padding: 20px;
+  border-radius: 10px;
+  box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2); 
+  margin: 20px auto;
+  max-width: 400px; 
+  text-align: center;
+}
+
+.calendar-container label {
+  display: block; 
+  font-size: 18px;
+  color: #E0A96D; 
+  margin-bottom: 10px;
+  margin-top: 10px;
+}
+
+.react-datepicker-wrapper {
+  display: inline-block; 
+  width: 100%; 
+}
+
+.react-datepicker__input-container input {
+  width: 100%; 
+  padding: 10px;
+  font-size: 16px;
+  color: #333; 
+  background-color: #f5f5f5; 
+  border: 1px solid #E0A96D; 
+  border-radius: 5px;
+  outline: none;
+  transition: border-color 0.3s ease;
+}
+
+.react-datepicker__input-container input:focus {
+  border-color: #c89054; 
+}
+
+.calendar-container p {
+  font-size: 16px;
+  margin-top: 15px;
+  color: #ddd; 
+}

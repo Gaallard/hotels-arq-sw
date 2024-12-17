@@ -37,11 +37,13 @@ func (service Service) GetReservaById(ctx context.Context, id int64) (domain.Res
 	}
 
 	return domain.Reserva{
-		ID:     reservaDAO.ID,
-		User:   int64(reservaDAO.User),
-		Hotel:  reservaDAO.Hotel,
-		Noches: int64(reservaDAO.Noches),
-		Estado: int64(reservaDAO.Estado),
+		ID:           reservaDAO.ID,
+		User:         int64(reservaDAO.User),
+		Hotel:        reservaDAO.Hotel,
+		Noches:       int64(reservaDAO.Noches),
+		FechaIngreso: reservaDAO.FechaIngreso.UTC(),
+		FechaSalida:  reservaDAO.FechaSalida.UTC(),
+		Estado:       int64(reservaDAO.Estado),
 	}, nil
 
 }
@@ -56,14 +58,14 @@ func (service Service) GetMisReservasById(ctx context.Context, id int64) ([]doma
 	result := make([]domain.Hotel, 0)
 	for _, hotel := range reservaDAO {
 		if hotel.Estado == 1 {
-			urlHotel := fmt.Sprintf("http://hotels-api:8081/hotels/%s ", hotel.Hotel)
+			urlHotel := fmt.Sprintf("http://nginx:8081/hotels/%s ", hotel.Hotel)
 			response, err := http.Get(urlHotel)
 
 			if err != nil {
 				return []domain.Hotel{}, fmt.Errorf("error getting hotel from server: %v", err)
 			}
 			if response.StatusCode != http.StatusOK {
-				return []domain.Hotel{}, fmt.Errorf("Unexpected error with status code: %d", response.Status)
+				return []domain.Hotel{}, fmt.Errorf("Unexpected error with status code: %v", response.Status)
 			}
 
 			body, err := ioutil.ReadAll(response.Body)
@@ -73,9 +75,12 @@ func (service Service) GetMisReservasById(ctx context.Context, id int64) ([]doma
 			var hotelBuscado domain.Hotel
 			err = json.Unmarshal(body, &hotelBuscado)
 			result = append(result, domain.Hotel{
-				Id:     hotelBuscado.Id,
-				Name:   hotelBuscado.Name,
-				Noches: int64(hotel.Noches),
+				Id:           hotelBuscado.Id,
+				Name:         hotelBuscado.Name,
+				Noches:       int64(hotel.Noches),
+				FechaIngreso: hotel.FechaIngreso.UTC(),
+				FechaSalida:  hotel.FechaSalida.UTC(),
+				Price:        float64(hotelBuscado.Price),
 			})
 		} else {
 			continue
@@ -89,13 +94,15 @@ func (service Service) InsertReserva(ctx context.Context, reserva domain.Reserva
 	var Reserva dao.Reserva
 	Reserva.User = int(reserva.User)
 	Reserva.Noches = int(reserva.Noches)
+	Reserva.FechaIngreso = reserva.FechaIngreso
+	Reserva.FechaSalida = reserva.FechaSalida
 	Reserva.Hotel = reserva.Hotel
 	Reserva.Estado = int(reserva.Estado)
 	println("Recibe user: ", int(reserva.User))
 	println("Recibe hotel: ", reserva.Hotel)
 
 	//comprobamos existencia del hotel en Mongo llamando a hotels-api
-	urlHotel := fmt.Sprintf("http://hotels-api:8081/hotels/%s ", reserva.Hotel)
+	urlHotel := fmt.Sprintf("http://nginx:8081/hotels/%s ", reserva.Hotel)
 	response, err := http.Get(urlHotel)
 
 	if err != nil {
@@ -127,7 +134,7 @@ func (service Service) InsertReserva(ctx context.Context, reserva domain.Reserva
 			return domain.Reserva{}, fmt.Errorf("error to marshal: %v", err)
 		}
 
-		urlHotel := fmt.Sprintf("http://hotels-api:8081/hotels/%s ", hotel.Id)
+		urlHotel := fmt.Sprintf("http://nginx:8081/hotels/%s ", hotel.Id)
 		response, err := http.NewRequest(http.MethodPut, urlHotel, bytes.NewBuffer(hotelSend))
 
 		if err != nil {
@@ -163,6 +170,8 @@ func (service Service) UpdateReserva(ctx context.Context, reserva domain.Reserva
 	Reserva.ID = reserva.ID
 	Reserva.User = int(reserva.User)
 	Reserva.Noches = int(reserva.Noches)
+	Reserva.FechaIngreso = (reserva.FechaIngreso)
+	Reserva.FechaSalida = (reserva.FechaSalida)
 	Reserva.Hotel = reserva.Hotel
 	Reserva.Estado = int(reserva.Estado)
 
@@ -181,11 +190,13 @@ func (service Service) UpdateReserva(ctx context.Context, reserva domain.Reserva
 
 func (service Service) DeleteReserva(ctx context.Context, reserva domain.Reserva) error {
 	daoReserva := dao.Reserva{
-		ID:     reserva.ID,
-		User:   int(reserva.User),
-		Noches: int(reserva.Noches),
-		Hotel:  reserva.Hotel,
-		Estado: int(reserva.Estado),
+		ID:           reserva.ID,
+		User:         int(reserva.User),
+		Noches:       int(reserva.Noches),
+		FechaIngreso: reserva.FechaIngreso,
+		FechaSalida:  reserva.FechaSalida,
+		Hotel:        reserva.Hotel,
+		Estado:       int(reserva.Estado),
 	}
 	println("service: ", daoReserva.ID)
 	err := service.mainRepo.DeleteReserva(ctx, daoReserva)
@@ -193,7 +204,7 @@ func (service Service) DeleteReserva(ctx context.Context, reserva domain.Reserva
 		return fmt.Errorf("Error eliminando reserva service", reserva.ID, err)
 	}
 
-	urlHotel := fmt.Sprintf("http://hotels-api:8081/hotels/%s ", reserva.Hotel)
+	urlHotel := fmt.Sprintf("http://nginx:8081/hotels/%s ", reserva.Hotel)
 	response, err := http.Get(urlHotel)
 
 	if err != nil {
@@ -223,7 +234,7 @@ func (service Service) DeleteReserva(ctx context.Context, reserva domain.Reserva
 		return fmt.Errorf("error to marshal: %v", err)
 	}
 
-	urlHotel = fmt.Sprintf("http://hotels-api:8081/hotels/%s ", hotel.Id)
+	urlHotel = fmt.Sprintf("http://nginx:8081/hotels/%s ", hotel.Id)
 	response2, err := http.NewRequest(http.MethodPut, urlHotel, bytes.NewBuffer(hotelSend))
 	client := &http.Client{}
 	resp, err := client.Do(response2)

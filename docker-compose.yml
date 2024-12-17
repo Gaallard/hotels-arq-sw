@@ -7,7 +7,6 @@ services:
     environment:
       MYSQL_ROOT_PASSWORD: root
       MYSQL_DATABASE: users
-      MYSQL_PASSWORD: root
     networks:
       - app-network
 
@@ -37,8 +36,8 @@ services:
       - "5672:5672"
       - "15672:15672"
     environment:
-      RABBITMQ_DEFAULT_USER: root
-      RABBITMQ_DEFAULT_PASS: root
+      RABBITMQ_DEFAULT_USER: guest
+      RABBITMQ_DEFAULT_PASS: guest
     networks:
       - app-network
 
@@ -57,17 +56,15 @@ services:
     image: nginx:latest
     container_name: nginx-container
     ports:
-      - "8081:8081" # Exponer NGINX en el puerto 8081
+      - "8081:8081"  # Asegúrate de que el puerto 8081 esté mapeado
     volumes:
-      - ./nginx.conf:/etc/nginx/nginx.conf # Montar la configuración de NGINX
+      - ./nginx.conf:/etc/nginx/nginx.conf  # Ruta de tu archivo de configuración de Nginx
     depends_on:
       - hotels-api1
       - hotels-api2
       - hotels-api3
     networks:
       - app-network
-
-  
 
   users-api:
     image: users-api:latest
@@ -81,8 +78,17 @@ services:
     depends_on:
       - memcached
       - mysql
+    environment:
+      DB_HOST: mysql
+      DB_PORT: 3306
+      DB_USER: root
+      DB_PASSWORD: root
+      DB_NAME: users
     networks:
       - app-network
+    volumes:
+      - ./backend/users-api:/app
+      - /var/run/docker.sock:/var/run/docker.sock
 
 
 
@@ -94,12 +100,16 @@ services:
       dockerfile: Dockerfile
     ports:
       - "8082:8081" # Mapeo interno (instancia 1)
+    environment:
+      - INSTANCE_ID=hotels-api-container-1
     command: /bin/sh -c "sleep 10 && go run main.go"
     depends_on:
       - mongo
       - rabbitmq
     networks:
       - app-network
+    volumes:
+      - ./backend/hotels-api:/app
 
   hotels-api2:
     image: hotels-api:latest
@@ -109,12 +119,17 @@ services:
       dockerfile: Dockerfile
     ports:
       - "8085:8081" # Mapeo interno (instancia 2)
+    environment:
+      - INSTANCE_ID=hotels-api-container-3
     command: /bin/sh -c "sleep 10 && go run main.go"
     depends_on:
       - mongo
       - rabbitmq
     networks:
       - app-network
+    volumes:
+      - ./backend/hotels-api:/app
+      - /var/run/docker.sock:/var/run/docker.sock
 
   hotels-api3:
     image: hotels-api:latest
@@ -124,12 +139,17 @@ services:
       dockerfile: Dockerfile
     ports:
       - "8086:8081" # Mapeo interno (instancia 3)
+    environment:
+      - INSTANCE_ID=hotels-api-container-3
     command: /bin/sh -c "sleep 10 && go run main.go"
     depends_on:
       - mongo
       - rabbitmq
     networks:
       - app-network
+    volumes:
+      - ./backend/hotels-api:/app
+      - /var/run/docker.sock:/var/run/docker.sock
 
 #  hotels-api:
 #    image: hotels-api:latest
@@ -157,8 +177,18 @@ services:
     command: /bin/sh -c "sleep 10 && go run main.go"
     depends_on:
       - mysql
+    environment:
+      DB_HOST: mysql
+      DB_PORT: 3306
+      DB_USER: root
+      DB_PASSWORD: root
+      DB_NAME: reservas
+
     networks:
       - app-network
+    volumes:
+      - ./backend/reserva-api:/app
+      - /var/run/docker.sock:/var/run/docker.sock
 
   search-api:
     image: search-api:latest
@@ -174,6 +204,9 @@ services:
       - solr
     networks:
       - app-network
+    volumes:
+      - ./backend/search-api:/app
+      - /var/run/docker.sock:/var/run/docker.sock
 
 #  frontend:
 #    image: frontend:latest

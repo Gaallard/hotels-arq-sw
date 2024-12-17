@@ -1,6 +1,7 @@
 package usersController
 
 import (
+	"fmt"
 	"strings"
 
 	"github.com/gin-gonic/gin"
@@ -18,6 +19,9 @@ type UserService interface {
 	GetUserByName(usuarioDomain Domain.UserData) (Domain.UserData, e.ApiError)
 	Login(User Domain.UserData) (Domain.LoginData, e.ApiError)
 	InsertUsuario(usuarioDomain Domain.UserData) (Domain.UserData, e.ApiError)
+	GetContainerStatus(containerName string) string
+	ListContainersStatus(containerNames []string) []Domain.ContainerStatus
+	ManageContainer(containerName, action string) error
 }
 
 type Controller struct {
@@ -104,4 +108,29 @@ func (controller Controller) UsuarioInsert(c *gin.Context) {
 
 	c.JSON(http.StatusCreated, userDomain)
 
+}
+func (controller Controller) ListContainers(c *gin.Context) {
+	println("sapeeeee")
+	containers := []string{
+		"mysql-container", "memcached-container", "mongo", "rabbit",
+		"solr", "nginx-container", "users-api-container",
+		"hotels-api-container-1", "hotels-api-container-2", "hotels-api-container-3",
+		"reserva-api-container", "search-api-container",
+	}
+
+	statuses := controller.service.ListContainersStatus(containers)
+	c.JSON(http.StatusOK, statuses)
+}
+
+func (controller Controller) ManageContainer(c *gin.Context) {
+	action := c.Param("action")      // "start" o "stop"
+	containerName := c.Param("name") // Nombre del contenedor
+
+	err := controller.service.ManageContainer(containerName, action)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{"message": fmt.Sprintf("Container %s %s successfully", containerName, action)})
 }

@@ -36,7 +36,6 @@ func (controller Controller) GetAllHotels2(ctx *gin.Context) {
 		})
 		return
 	}
-
 	// Responder con el resultado en formato JSON
 	ctx.JSON(http.StatusOK, result)
 }

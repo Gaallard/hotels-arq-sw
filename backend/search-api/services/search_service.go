@@ -66,7 +66,7 @@ func (service Service) Search(ctx context.Context, query string, offset int, lim
 		go func(hotelID string) {
 			defer group.Done()
 
-			urlHotel := fmt.Sprintf("http://hotels-api:8081/hotels/%s", hotelID)
+			urlHotel := fmt.Sprintf("http://nginx:8081/hotels/%s", hotelID)
 			response, err := http.Get(urlHotel)
 			if err != nil {
 				log.Printf("Error fetching hotel (%s): %v\n", hotelID, err)

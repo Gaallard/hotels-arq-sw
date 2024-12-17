@@ -93,35 +93,43 @@ export async function getHotelById(hotelId) {
     console.log('Hotel cargado:', response.data);
     return response.data;
   } catch (error) {
-    console.error('hotelid bolit: ', error.response.hotel_id)
-    console.error('response data del ocote: ', error.response.data)
     console.error('Error al obtener los hoteles¡?:', error.response ? error.response.data : error.message);
     throw error;
   }
 }
 
-export async function reserva(Data){
+export async function reserva(Data) {
   const token = await tokenId();
-  const data = {
-    "user_id": token,
-    "hotel_id": Data.hotel_id,
-    "noches":  parseInt(Data.noches, 10),
-    "estado": Data.estado,
-  }
-  console.log("Data id:", data);
-  console.log("Type of user_id:", typeof data.user_id);
-  console.log("Type of hotel_id:", typeof data.hotel_id);
-  console.log("Type of noches:", typeof data.noches);
+  console.log("esto recibo como fecha: ",Data.hotel_id)
 
-  return axios.post('http://localhost:8083/reservas/',data, {
-    headers: { 'Authorization': `Bearer ${authToken}`, 'Content-Type': 'application/json' }
+  if (!Data.hotel_id || !Data.noches || !Data.fecha_ingreso || !Data.fecha_salida) {
+    throw new Error("Faltan datos necesarios para la reserva");
+  }
+
+  //const formatFecha = (fecha) => fecha.toISOString().slice(0, -5) + "Z"; // Formato requerido
+  const data = {
+    user_id: token,
+    hotel_id: Data.hotel_id,
+    noches: parseInt(Data.noches, 10),
+    fecha_ingreso: Data.fecha_ingreso, 
+    fecha_salida: Data.fecha_salida,   
+    estado: Data.estado || 1,
+  };
+
+  console.log("Datos enviados a la API:", data);
+
+  return axios.post('http://localhost:8083/reservas/', data, {
+    headers: {
+      'Content-Type': 'application/json',
+      'Authorization': `Bearer ${authToken}`,
+    },
   })
-    .then(response => {
-      console.log('Reserva realizada: ', response.data)
-      return response.data
+    .then((response) => {
+      console.log('Reserva realizada: ', response.data);
+      return response.data;
     })
-    .catch(error => {
-      console.error('Reserva error: ', error.response?.data || error.message)
+    .catch((error) => {
+      console.error('Error al realizar la reserva: ', error.response?.data || error.message);
       throw error;
     });
 }

@@ -7,11 +7,15 @@ import (
 	hotelsService "hotels-api/services/hotels"
 	"log"
 	"net/http"
+	"os"
 
 	"github.com/gin-gonic/gin"
 )
 
 func main() {
+
+	instanceID := os.Getenv("INSTANCE_ID")
+	log.Printf("Starting instance: %s", instanceID)
 
 	router := gin.Default()
 

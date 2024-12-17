@@ -6,11 +6,13 @@ import (
 
 	_ "github.com/jinzhu/gorm/dialects/mysql"
 
+	//"gorm.io/gorm"
+
 	"github.com/jinzhu/gorm"
 	log "github.com/sirupsen/logrus"
 )
 
-type SQLConfig struct {
+type MySQLConfig struct {
 	Name string
 	User string
 	Pass string
@@ -24,7 +26,7 @@ type SQL struct {
 
 // DeleteReserva implements reservas.Repository.
 
-func NewSql(config SQLConfig) SQL {
+func NewSql(config MySQLConfig) SQL {
 	db, err := gorm.Open("mysql", config.User+":"+config.Pass+"@tcp("+config.Host+":3306)/"+config.Name+"?charset=utf8&parseTime=True")
 	if err != nil {
 		log.Println("Connection Failed to Open")
@@ -40,6 +42,38 @@ func NewSql(config SQLConfig) SQL {
 
 }
 
+/*
+var (
+
+	migrate = []interface{}{
+		Model.User{},
+	}
+
+)
+
+	func NewMySQL(config MySQLConfig) SQL {
+		// Build DSN (Data Source Name)
+		dsn := fmt.Sprintf("%s:%s@tcp(%s:%s)/%s?charset=utf8mb4&parseTime=True&loc=Local",
+			config.Username, config.Password, config.Host, config.Port, config.Database)
+
+		// Open connection to MySQL using GORM
+		db, err := gorm.Open(mysql.Open(dsn), &gorm.Config{})
+		if err != nil {
+			log.Fatalf("failed to connect to MySQL: %s", err.Error())
+		}
+
+		// Automigrate structs to Gorm
+		for _, target := range migrate {
+			if err := db.AutoMigrate(target); err != nil {
+				log.Fatalf("error automigrating structs: %s", err.Error())
+			}
+		}
+
+		return SQL{
+			db: db,
+		}
+	}
+*/
 func (repository SQL) GetUserByName(Usuario Model.User) (Model.User, e.ApiError) {
 	var user Model.User
 

@@ -1,23 +1,62 @@
-
-
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { getHotelById, tokenRole, register } from '../../utils/Acciones.js';
+import { getHotelById, tokenRole, updateHotel, reserva, tokenId } from '../../utils/Acciones.js';
 import './MoreInfo.css';
+import Swal from 'sweetalert2';
+import DatePicker from 'react-datepicker';
+import 'react-datepicker/dist/react-datepicker.css';
 
 const MoreInfo = () => {
-  const { id } = useParams(); // Obtiene el ID del hotel desde la URL
+  const { id } = useParams();
   const navigate = useNavigate();
   const [hotel, setHotel] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [isAdmin, setRole] = useState('');
+  const [cantNoches, setCantNoches] = useState(1);
+  const [showEditDialog, setShowEditDialog] = useState(false);
+
+  const [name, setName] = useState('');
+  const [address, setAddress] = useState('');
+  const [country, setCountry] = useState('');
+  const [city, setCity] = useState('');
+  const [state, setState] = useState('');
+  const [amenities, setAmenities] = useState([]);
+  const [rating, setRating] = useState('');
+  const [price, setPrice] = useState('');
+  const [available_rooms, setAvailableRooms] = useState('');
+  const [mensaje, setMensaje] = useState('');
+  const [reservas, setReservas] = useState('');
+  const [reservaRealizada, setReservaRealizada] = useState(false);
+
+  const [fechaIngreso, setFechaIngreso] = useState(new Date())
+  const [fechaSalida, setFechaSalida] = useState(() => {
+    const tomorrow = new Date();
+    tomorrow.setDate(tomorrow.getDate() + 1);
+    return tomorrow;
+  });
+
+
+  const calculateNights = (start, end) => {
+    const diffTime = Math.abs(end - start);
+    return Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+  };
+
+  useEffect(() => {
+    if (fechaIngreso && fechaSalida) {
+      const nights = calculateNights(fechaIngreso, fechaSalida);
+      setCantNoches(nights);
+    }
+  }, [fechaIngreso, fechaSalida]);
+
 
   useEffect(() => {
     const fetchHotelDetails = async () => {
       try {
         const hotelData = await getHotelById(id);
-        console.log('id boliviano: ', id) // Llama a una función para obtener los detalles del hotel
         setHotel(hotelData);
+        const role = await tokenRole();
+        setRole(role);
       } catch (err) {
         setError('Error al cargar los detalles del hotel.');
         console.error(err);
@@ -29,292 +68,170 @@ const MoreInfo = () => {
     fetchHotelDetails();
   }, [id]);
 
+  const openEditDialog = (hotel) => {
+    setName(hotel.name || '');
+    setAddress(hotel.address || '');
+    setCountry(hotel.country || '');
+    setCity(hotel.city || '');
+    setState(hotel.state || '');
+    setAmenities(hotel.amenities || []);
+    setRating(hotel.rating || '');
+    setPrice(hotel.price || '');
+    setAvailableRooms(hotel.available_rooms || '');
+    setShowEditDialog(true);
+  };
+  console.log("fecha ingreso: ",fechaIngreso)
+
+  const closeEditDialog = () => {
+    setShowEditDialog(false);
+  };
+
+  const handleUpdateHotelSubmit = async (e) => {
+    e.preventDefault();
+
+    const hotelData = {
+      name,
+      address,
+      country,
+      city,
+      state,
+      amenities,
+      rating: parseFloat(rating),
+      price: parseFloat(price),
+      available_rooms: parseInt(available_rooms, 10),
+    };
+
+    try {
+      await updateHotel(id, hotelData);
+      setHotel(hotelData);
+      setShowEditDialog(false);
+    } catch (error) {
+      console.error('Error al actualizar el hotel:', error);
+    }
+  };
+
+  useEffect(() => {
+    const reservaGuardada = localStorage.getItem(`reservaRealizada-${id}`);
+    if (reservaGuardada === 'true') {
+      setReservaRealizada(true);
+    }
+  }, [id]);
+  
+  const handleReserva = async (hotelId) => {
+    if (!cantNoches || cantNoches <= 0) {
+      setMensaje('Por favor, selecciona una cantidad válida de noches.');
+      return;
+    }
+  
+    const formatFecha = (fecha) => fecha.toISOString().slice(0, -5) + "Z";
+  
+    console.log("Fecha de ingreso:", fechaIngreso);
+    console.log("Fecha de salida:", fechaSalida);
+
+    const reservaData = {
+      hotel_id: hotelId,
+      noches: cantNoches,
+      fecha_ingreso: fechaIngreso.toISOString().split(".")[0] + "Z", // Quita fracción de segundos
+      fecha_salida: fechaSalida.toISOString().split(".")[0] + "Z",  // Quita fracción de segundos
+      estado: 1,
+    };
+
+    console.log("mogolico:", reservaData.fecha_ingreso);
+    console.log("mogolico 2:", reservaData.fecha_salida);
+    
+    try {
+      console.log("Datos enviados para reserva:", reservaData);
+      const newReserva = await reserva(reservaData);
+      setReservas((prev) => [...prev, newReserva]);
+      setMensaje('Reserva realizada con éxito');
+      setReservaRealizada(true);
+      localStorage.setItem(`reservaRealizada-${id}`, 'true');
+      Swal.fire({
+        icon: 'success',
+        title: 'Reserva completada',
+        text: '¡Su reserva se ha realizado con éxito!',
+        confirmButtonText: 'Aceptar',
+      });
+    } catch (error) {
+      console.error('Error al realizar la reserva:', error.response?.data || error.message);
+      setMensaje('Error al realizar la reserva');
+      Swal.fire({
+        icon: 'error',
+        title: 'Error en la reserva',
+        text: 'Por favor, verifique las fechas e intente nuevamente.',
+        confirmButtonText: 'Aceptar',
+      });
+    }
+  };
+  
+  
+
+  const handleFechaIngresoChange = (date) => {
+    setFechaIngreso(date);
+    const nextDay = new Date(date);
+    nextDay.setDate(nextDay.getDate() + 1);
+    if (fechaSalida <= date) {
+      setFechaSalida(nextDay);
+    }
+  };
+  
+
+
   if (loading) return <p>Cargando detalles del hotel...</p>;
   if (error) return <p>{error}</p>;
 
   return (
     <div className="hotel-details">
       <h1>{hotel.name}</h1>
-      <p>{hotel.description || 'No hay descripción disponible.'}</p>
       <p><strong>Dirección:</strong> {hotel.address}</p>
       <p><strong>Ciudad:</strong> {hotel.city}</p>
       <p><strong>País:</strong> {hotel.country}</p>
       <p><strong>Amenities:</strong> {hotel.amenities?.join(', ') || 'Ninguno'}</p>
       <p><strong>Calificación:</strong> {hotel.rating}</p>
-      <p><strong>Precio:</strong> {hotel.price}</p>
+      <p><strong>Precio por noche:</strong> {hotel.price}</p>
       <p><strong>Habitaciones disponibles:</strong> {hotel.available_rooms}</p>
 
-      <button onClick={() => navigate(-1)}>Volver</button>
-    </div>
-  );
-};
+      <div className="calendar-container">
+        <label>Fecha de ingreso:</label>
+        <DatePicker selected={fechaIngreso} onChange={handleFechaIngresoChange} minDate={new Date()}/>
+        <label>Fecha de egreso:</label>
+        <DatePicker selected={fechaSalida} onChange={(date) => setFechaSalida(date)} minDate={fechaIngreso} />
+        <p><strong>Noches:</strong> {cantNoches}</p>
+        <p><strong>Precio:</strong> {hotel.price * cantNoches}</p>
+      </div>
 
-export default MoreInfo;
+      <div className="botones_reserva">       
+        <button onClick={() => navigate(-1)}>Volver</button>
+        {!reservaRealizada && (
+          <button onClick={() => handleReserva(hotel.id)}>Reservar</button>
+        )}
+        {isAdmin && (
+          <button onClick={() => openEditDialog(hotel)}>Editar</button>
+        )}
+      </div>
 
-
-/*
-import React, { useEffect, useState } from 'react';
-import { getHotelById, reserva, tokenRole } from '../../utils/Acciones';
-import { useParams } from 'react-router-dom'; // Supongo que usas react-router para navegación
-
-const HotelDetails = () => {
-  const { hotelId } = useParams(); // Obtenemos el ID del hotel desde la URL
-  const [hotel, setHotel] = useState(null); // Estado para almacenar los datos del hotel
-  const [isAdmin, setRole] = useState(false); // Estado para verificar si es admin
-  const [nights, setNights] = useState(1); // Estado para manejar las noches de reserva
-  const [status, setStatus] = useState("Confirmada"); // Estado para el estado de la reserva
-
-  useEffect(() => {
-    // Cargar detalles del hotel
-    async function fetchHotelDetails() {
-      try {
-        const hotelData = await getHotelById(hotelId);
-        setHotel(hotelData);
-        console.log('hotel boliviano: ', hotelData)
-      } catch (error) {
-        console.error('Error al cargar los detalles del hotel:', error);
-      }
-    }
-
-    // Verificar rol del usuario
-    async function checkRole() {
-      try {
-        const role = await tokenRole();
-        setRole(role);
-      } catch (error) {
-        console.error('Error al verificar el rol del usuario:', error);
-      }
-    }
-
-    fetchHotelDetails();
-    checkRole();
-  }, [hotelId]);
-
-  const handleReservation = async () => {
-    try {
-      await reserva({
-        hotel_id: hotelId,
-        noches: nights,
-        estado: status,
-      });
-      alert('Reserva realizada exitosamente');
-    } catch (error) {
-      console.error('Error al realizar la reserva:', error);
-      alert('Error al realizar la reserva');
-    }
-  };
-
-  if (!hotel) {
-    return <p>Cargando detalles del hotel...</p>;
-  }
-
-  return (
-    <div>
-      <h1>Detalles del Hotel</h1>
-      <h2>{hotel.name}</h2>
-      <p><strong>Dirección:</strong> {hotel.address}</p>
-      <p><strong>Ciudad:</strong> {hotel.city}</p>
-      <p><strong>Estado:</strong> {hotel.state}</p>
-      <p><strong>País:</strong> {hotel.country}</p>
-      <p><strong>Rating:</strong> {hotel.rating}</p>
-      <p><strong>Amenidades:</strong> {hotel.amenities.join(', ')}</p>
-      <p><strong>Precio por noche:</strong> ${hotel.price}</p>
-      <p><strong>Habitaciones disponibles:</strong> {hotel.available_rooms}</p>
-
-      {!isAdmin && (
-        <div>
-          <h3>Realizar Reserva</h3>
-          <label>
-            Noches:
-            <input
-              type="number"
-              value={nights}
-              min="1"
-              onChange={(e) => setNights(Number(e.target.value))}
-            />
-          </label>
-          <button onClick={handleReservation}>Reservar</button>
+      {showEditDialog && (
+        <div className="modal">
+          <form onSubmit={handleUpdateHotelSubmit}>
+            <div className="modal-content">
+              <h2>Editar Hotel</h2>
+              <input type="text" value={name} onChange={(e) => setName(e.target.value)} placeholder="Nombre del Hotel" />
+              <input type="text" value={address} onChange={(e) => setAddress(e.target.value)} placeholder="Dirección" />
+              <input type="text" value={country} onChange={(e) => setCountry(e.target.value)} placeholder="País" />
+              <input type="text" value={city} onChange={(e) => setCity(e.target.value)} placeholder="Ciudad" />
+              <input type="text" value={state} onChange={(e) => setState(e.target.value)} placeholder="Estado" />
+              <input type="text" value={amenities} onChange={(e) => setAmenities(e.target.value.split(','))} placeholder="Amenities" />
+              <input type="number" value={rating} onChange={(e) => setRating(e.target.value)} placeholder="Calificación" />
+              <input type="text" value={price} onChange={(e) => setPrice(e.target.value)} placeholder="Precio por noche" />
+              <input type="number" value={available_rooms} onChange={(e) => setAvailableRooms(e.target.value)} placeholder="Habitaciones Disponibles" />
+              <button type="button" onClick={closeEditDialog}>Cancelar</button>
+              <button type="submit">Confirmar</button>
+            </div>
+          </form>
         </div>
       )}
     </div>
   );
 };
 
-export default HotelDetails;
-
-
-/*import React, { useEffect, useState } from 'react';
-import { buscarSuscription, DeleteCurso, suscribe, Docomment, tokenRole, uploadFile } from '../Utils/Acciones';
-import { Link } from 'react-router-dom';
-import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faUser, faHome } from '@fortawesome/free-solid-svg-icons';
-import '../../src/Css/moreinfo.css';
-import '../../src/Css/App.css';
-import '../../src/Css/Account.css';
-
-const CourseDetail = () => {
-  const [courses, setCourse] = useState([]);
-  const [isSubscribed, setIsSubscribed] = useState(false);
-  const [comment, setComment] = useState('');
-  const [Comments, getComments] = useState([]);
-  const [isAdmin, setRole] = useState('');
-  const [file, setFile] = useState();
-  const [message, setMessage] = useState('');
-
-  const getId = parseInt(localStorage.getItem('hotelid'));
-  console.log('id del hotel: ', getId);
-
-  useEffect(() => {
-    const fetchRole = async () => {
-      try {
-        const role = await tokenRole();
-        setRole(role);
-        console.log('role: ', role);
-      } catch (error) {
-        console.error('Error fetching role:', error);
-      }
-    };
-    fetchRole();
-  }, []);
-
-  useEffect(() => {
-    const fetchCourse = async () => {
-      try {
-        const response = await fetch(`http://localhost:8080/courses/courseInfo/${getId}`, {
-          headers: {
-            Authorization: `Bearer ${localStorage.getItem('token')}`,
-          },
-        });
-        const data = await response.json();
-        setCourse(data);
-        console.log('hoola', data);
-
-        const isUserSubscribed = await buscarSuscription(data.id);
-        setIsSubscribed(!!isUserSubscribed);
-      } catch (error) {
-        console.error('Error fetching course:', error.message);
-        console.error('Error details:', error.response);
-      }
-    };
-
-    fetchCourse();
-  }, [getId]);
-
-  const handleSubscribe = async (courseId) => {
-    try {
-      await suscribe(courseId);
-      setIsSubscribed(true);
-      localStorage.setItem(`isSubscribed_${courseId}`, 'true');
-    } catch (error) {
-      console.error('Error al suscribirse al curso:', error);
-      console.log('Error details:', error.response.data);
-    }
-  };
-
-  useEffect(() => {
-    fetchComments();
-  }, [getId]);
-
-  const fetchComments = async () => {
-    try {
-      const response = await fetch(`http://localhost:8080/comments/${getId}`, {
-        headers: {
-          Authorization: `Bearer ${localStorage.getItem('token')}`,
-        },
-      });
-      const data = await response.json();
-      getComments(data);
-    } catch (error) {
-      console.error('Error al obtener comments:', error);
-    }
-  };
-
-  const handleFileChange = (e) => {
-    setFile(e.target.files[0]);
-  };
-
-  const handleFileUpload = async (e) => {
-    e.preventDefault();
-    try {
-      const response = await uploadFile(file, getId);
-      setMessage(response.message || 'Archivo subido correctamente!');
-    } catch (error) {
-      setMessage('Error al subir el archivo');
-    }
-  };
-
-  const handleSuscription = async (courseId) => {
-    try {
-      const suscp = await buscarSuscription(courseId);
-      console.log('anduvo bien: ', suscp);
-      const data = {
-        suscription_id: suscp,
-        comment: comment,
-      };
-      await Docomment(data);
-      fetchComments();
-      setComment('');
-    } catch (error) {
-      console.error('Error commenting:', error);
-    }
-  };
-
-  console.log('role: ', isAdmin);
-
-  return (
-    <div className='courseMoreInfo'>
-      <header className="navBar">
-        <Link to="/home" className='linkPageTitle'>
-          <h1 className='pageTitle'>Details</h1>
-        </Link>
-        <div className='Perfil-Home-Box'>
-          <Link to='/myAccount' className='linkMyAccountButton'>
-            <button className='myAccountButton'>
-              <FontAwesomeIcon icon={faUser} /> Perfil
-            </button>
-          </Link>
-          <Link to='/home' className='linkHomeButton'>
-            <button className="buttonToHome">
-              <FontAwesomeIcon icon={faHome} /> Home
-            </button>
-          </Link>
-        </div>
-      </header>
-      <div className="info">
-        <div key={courses.id} className="Course">
-          <div className="CourseDetail">
-            <h1 className='CourseTitle'>{courses.name}</h1>
-            <p className='CourseDescription'>{courses.descriptionlarga}</p>
-            <p className='CourseCategory'>Cateoria: {courses.category}</p>
-            <p className='CourseCategory'>Profesor: {courses.profesor}</p>
-            <p className='CourseCategory'>Horas de cursado: {courses.horas}</p>
-            <button onClick={() => handleSubscribe(courses.id)} className="suscribe">
-              {isSubscribed ? 'Suscripto' : 'Suscribirse'}
-            </button>
-
-            {isSubscribed && (
-              <div className='Comentar'>
-                <input
-                  className='comentariotexto'
-                  type="text"
-                  placeholder='Comentario'
-                  value={comment}
-                  onChange={(e) => setComment(e.target.value)}
-                />
-                <button onClick={() => handleSuscription(courses.id)} className="suscribe">Comentar</button>
-              </div>
-            )}
-
-            {isAdmin && (
-              <Link to='/home' className='linkDelete'>
-                <button onClick={() => DeleteCurso(courses.id)} className="delete">Eliminar curso</button>
-              </Link>
-            )}
-          </div>
-        </div>
-      </div>
-    </div>
-  );
-}
-
-export default CourseDetail; */
+export default MoreInfo;

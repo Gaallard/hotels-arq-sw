@@ -3,6 +3,7 @@ import { BrowserRouter, Route, Routes } from 'react-router-dom';
 import LoginRegister from './components/LoginRegister/LoginRegister'; 
 import Home from './components/home/home';
 import MisHoteles from './components/MisHoteles/MisHoteles';
+import Contenedores from './components/Contenedores/Contenedores';
 import MoreInfo from './components/MoreInfo/MoreInfo.jsx';
 import './App.css';
 
@@ -24,6 +25,9 @@ function App() {
           <Route path="/admincontrol" element={<MisHoteles />} />
 
           <Route path="/moreinfo/:id" element={<MoreInfo />} />
+          
+          <Route path="/contenedores" element={<Contenedores />} />
+
         </Routes>
       </div>
     </BrowserRouter>

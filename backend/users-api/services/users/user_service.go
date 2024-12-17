@@ -5,11 +5,15 @@ import (
 	Model "backend/model"
 	"crypto/md5"
 	"encoding/hex"
+	"fmt"
+	"os/exec"
+	"strings"
 	"time"
 
 	e "backend/errors"
 
 	jwt "github.com/dgrijalva/jwt-go"
+	"github.com/labstack/gommon/log"
 )
 
 type userServiceInterface interface {
@@ -27,6 +31,39 @@ func NewService(UserService userServiceInterface, cacheService userServiceInterf
 		UserService:  UserService,
 		cacheService: cacheService,
 	}
+}
+
+func (s Service) GetContainerStatus(containerName string) string {
+	cmd := exec.Command("docker", "inspect", "--format", "{{.State.Status}}", containerName)
+	output, err := cmd.Output()
+	if err != nil {
+		log.Errorf("Error getting status for container %s: %v", containerName, err)
+		return "unknown"
+	}
+	return strings.TrimSpace(string(output))
+}
+
+func (s Service) ManageContainer(containerName, action string) error {
+	// Validar acción
+	if action != "start" && action != "stop" {
+		return fmt.Errorf("invalid action: %s", action)
+	}
+
+	cmd := exec.Command("docker", action, containerName)
+	if err := cmd.Run(); err != nil {
+		log.Errorf("Error managing container %s: %v", containerName, err)
+		return fmt.Errorf("failed to %s container %s", action, containerName)
+	}
+	return nil
+}
+
+func (s Service) ListContainersStatus(containerNames []string) []Domain.ContainerStatus {
+	var statuses []Domain.ContainerStatus
+	for _, container := range containerNames {
+		status := s.GetContainerStatus(container)
+		statuses = append(statuses, Domain.ContainerStatus{Name: container, Status: status})
+	}
+	return statuses
 }
 
 func (s Service) GetUserByName(usuarioDomain Domain.UserData) (Domain.UserData, e.ApiError) {

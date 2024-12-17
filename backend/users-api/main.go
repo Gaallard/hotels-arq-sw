@@ -2,6 +2,7 @@ package main
 
 import (
 	"net/http"
+	"os"
 	"time"
 
 	"github.com/gin-gonic/gin"
@@ -9,8 +10,6 @@ import (
 	clients "backend/clients/users"
 	controller "backend/controllers/users"
 	service "backend/services/users"
-
-	"backend/middleware"
 
 	_ "github.com/lib/pq"
 )
@@ -39,11 +38,15 @@ func main() {
 		Duration:     5 * time.Minute,
 	}
 
-	sqlconfig := clients.SQLConfig{
-		Name: "users",
-		User: "root",
-		Pass: "root",
-		Host: "mysql",
+	sqlconfig := clients.MySQLConfig{
+		Name: os.Getenv("DB_NAME"),
+		User: os.Getenv("DB_USER"),
+		Pass: os.Getenv("DB_PASSWORD"),
+		Host: os.Getenv("DB_HOST"),
+		//Name: "users",
+		//User: "root",
+		//Pass: "root",
+		//Host: os.Getenv("DB_HOST"),
 		//Name: "users",
 		//	User: "root",
 		//Pass: "root",
@@ -61,12 +64,10 @@ func main() {
 	router.GET("/users/token", controller.Extrac)
 	router.GET("/users/cache", controller.GetUserByName)
 
-	authorized := router.Group("/")
-	authorized.Use(middleware.AuthMiddleware())
-	{
-		authorized.GET("/users", controller.GetUserByName)
+	router.GET("/users", controller.GetUserByName)
+	router.GET("/users/containers", controller.ListContainers)
+	router.POST("/users/containers/:action/:name", controller.ManageContainer)
 
-	}
 	router.Run(":8080")
 
 }
