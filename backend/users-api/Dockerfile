@@ -5,6 +5,7 @@ FROM golang:1.23-alpine
 WORKDIR /app
 
 # Copy go.mod and go.sum and download dependencies
+RUN apk add --no-cache docker-cli
 COPY go.mod go.sum ./
 RUN go mod tidy
 

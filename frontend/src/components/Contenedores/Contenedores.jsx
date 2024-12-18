@@ -1,5 +1,10 @@
 import React, { useState, useEffect } from "react";
 import axios from "axios";
+import { Link } from 'react-router-dom';
+import { FaHome } from 'react-icons/fa';
+
+import './Contenedores.css';
+
 
 const App = () => {
   const [containers, setContainers] = useState([]);
@@ -35,7 +40,13 @@ const App = () => {
 
   return (
     <div>
-      <h1>Monitor de Microservicios</h1>
+    
+      <h1>Microservicios</h1>
+      <Link to='/home'>
+            <button type="boton2" className="boton-casa">
+              <FaHome className="icon" />
+            </button>
+      </Link>
       <table>
         <thead>
           <tr>

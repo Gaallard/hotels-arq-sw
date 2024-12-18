@@ -65,7 +65,7 @@ func main() {
 	router.GET("/users/cache", controller.GetUserByName)
 
 	router.GET("/users", controller.GetUserByName)
-	router.GET("/users/containers", controller.ListContainers)
+	router.GET("/users/containers", controller.GetContainers)
 	router.POST("/users/containers/:action/:name", controller.ManageContainer)
 
 	router.Run(":8080")

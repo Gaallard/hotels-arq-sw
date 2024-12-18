@@ -1,7 +1,6 @@
 package main
 
 import (
-	"context"
 	hotelsController "hotels-api/controllers/hotels"
 	hotelsRepository "hotels-api/repositories/hotels"
 	hotelsService "hotels-api/services/hotels"
@@ -62,13 +61,13 @@ func main() {
 	//le el rabiitpubliser al service
 	service := hotelsService.NewService(mainRepository, cacheRepository, rabbitRpo)
 	controller := hotelsController.NewController(service)
+	/*
+		ctx := context.Background()
 
-	ctx := context.Background()
-
-	err := service.GetAllHotels(ctx)
-	if err != nil {
-		log.Fatalf("error publishing hotels to RabbitMQ on startup: %v", err)
-	}
+		err := service.GetAllHotels(ctx)
+		if err != nil {
+			log.Fatalf("error publishing hotels to RabbitMQ on startup: %v", err)
+		}*/
 
 	// Router
 	router.GET("/hotels/:id", controller.GetHotelByID)

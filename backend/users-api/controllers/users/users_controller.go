@@ -20,7 +20,7 @@ type UserService interface {
 	Login(User Domain.UserData) (Domain.LoginData, e.ApiError)
 	InsertUsuario(usuarioDomain Domain.UserData) (Domain.UserData, e.ApiError)
 	GetContainerStatus(containerName string) string
-	ListContainersStatus(containerNames []string) []Domain.ContainerStatus
+	GetContainersStatus(containerNames []string) []Domain.ContainerStatus
 	ManageContainer(containerName, action string) error
 }
 
@@ -109,22 +109,18 @@ func (controller Controller) UsuarioInsert(c *gin.Context) {
 	c.JSON(http.StatusCreated, userDomain)
 
 }
-func (controller Controller) ListContainers(c *gin.Context) {
-	println("sapeeeee")
+func (controller Controller) GetContainers(c *gin.Context) {
 	containers := []string{
-		"mysql-container", "memcached-container", "mongo", "rabbit",
-		"solr", "nginx-container", "users-api-container",
 		"hotels-api-container-1", "hotels-api-container-2", "hotels-api-container-3",
-		"reserva-api-container", "search-api-container",
 	}
 
-	statuses := controller.service.ListContainersStatus(containers)
+	statuses := controller.service.GetContainersStatus(containers)
 	c.JSON(http.StatusOK, statuses)
 }
 
 func (controller Controller) ManageContainer(c *gin.Context) {
-	action := c.Param("action")      // "start" o "stop"
-	containerName := c.Param("name") // Nombre del contenedor
+	action := c.Param("action")
+	containerName := c.Param("name")
 
 	err := controller.service.ManageContainer(containerName, action)
 	if err != nil {
@@ -132,5 +128,5 @@ func (controller Controller) ManageContainer(c *gin.Context) {
 		return
 	}
 
-	c.JSON(http.StatusOK, gin.H{"message": fmt.Sprintf("Container %s %s successfully", containerName, action)})
+	c.JSON(http.StatusOK, gin.H{"Salida: ": fmt.Sprintf("Container %s %s correctamente", containerName, action)})
 }

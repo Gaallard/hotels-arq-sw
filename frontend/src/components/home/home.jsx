@@ -1,7 +1,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { FaHome } from 'react-icons/fa';
-import { insertHotel, updateHotel, reserva, getAllHotels } from '../../utils/Acciones.js';
+import { insertHotel, updateHotel, search, getAllHotels } from '../../utils/Acciones.js';
 import { MdEdit } from 'react-icons/md';
 import { FaPlus } from 'react-icons/fa';
 import Swal from 'sweetalert2';
@@ -85,15 +85,20 @@ const MisHoteles = () => {
     fetchHotels();
   }, []);
 
-  const handleSearch = () => {
+  const handleSearch = async() => {
     if (searchQuery.trim() === '') {
       setFilteredHotels(hotels);
       return;
     }
-    const filtered = hotels.filter((hotel) =>
-      hotel.name.toLowerCase().includes(searchQuery.toLowerCase())
-    );
-    setFilteredHotels(filtered);
+    try {
+      console.log("buscamos este hotel: ",searchQuery)
+      const searchResults = await search(searchQuery, 0, 10); // Puedes ajustar offset y limit según necesites
+      setFilteredHotels(searchResults.results || searchResults);
+      setMensaje("Resultados para", `${searchQuery}`);
+    } catch (error) {
+      console.error("Error al buscar hoteles:", error);
+      setMensaje("Error al buscar hoteles");
+    }
   };
 
 
@@ -227,12 +232,12 @@ const MisHoteles = () => {
   </div>
 )}
       <button className="mishoteles" onClick={() => navigate('/mishoteles')}>
-        Mis Hoteles
+        Mis Reservas
       </button>
-
+      {isAdmin && (
       <button className="contenedores" onClick={() => navigate('/contenedores')}>
-        Contenedores
-      </button>
+        Microservicios
+      </button>)}
     </div>
   );
 

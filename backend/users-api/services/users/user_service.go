@@ -35,9 +35,10 @@ func NewService(UserService userServiceInterface, cacheService userServiceInterf
 
 func (s Service) GetContainerStatus(containerName string) string {
 	cmd := exec.Command("docker", "inspect", "--format", "{{.State.Status}}", containerName)
-	output, err := cmd.Output()
+	output, err := cmd.CombinedOutput()
 	if err != nil {
 		log.Errorf("Error getting status for container %s: %v", containerName, err)
+		println("error de cmd: ", err)
 		return "unknown"
 	}
 	return strings.TrimSpace(string(output))
@@ -57,7 +58,7 @@ func (s Service) ManageContainer(containerName, action string) error {
 	return nil
 }
 
-func (s Service) ListContainersStatus(containerNames []string) []Domain.ContainerStatus {
+func (s Service) GetContainersStatus(containerNames []string) []Domain.ContainerStatus {
 	var statuses []Domain.ContainerStatus
 	for _, container := range containerNames {
 		status := s.GetContainerStatus(container)
@@ -144,7 +145,7 @@ func (s Service) Login(User Domain.UserData) (Domain.LoginData, e.ApiError) {
 
 	var user, err = s.cacheService.GetUserByName(usuario)
 	if err != nil {
-		user, err = s.cacheService.GetUserByName(usuario)
+		user, err = s.UserService.GetUserByName(usuario)
 
 	}
 	var tokenDomain Domain.LoginData
